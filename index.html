@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تقييم معلمي العلوم - أونلاين</title>
+    <style>
+        /* نفس التصميم الأنيق السابق */
+        :root { --primary: #2980b9; --secondary: #2c3e50; --success: #27ae60; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        .header { background: var(--secondary); color: white; padding: 15px; text-align: center; }
+        .container { max-width: 900px; margin: 20px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .nav-buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
+        .nav-btn { padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-eval { background: var(--primary); }
+        .btn-admin { background: #e74c3c; }
+        .form-group { margin-bottom: 20px; border-bottom: 1px dashed #ddd; padding-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--secondary); }
+        .sub-label { font-size: 0.9em; color: #666; display: block; margin-bottom: 10px;}
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .rating-box { display: flex; gap: 10px; justify-content: space-between; max-width: 400px; }
+        .radio-wrapper input { display: none; }
+        .radio-wrapper span { display: inline-block; width: 40px; height: 40px; line-height: 40px; background: #eee; border-radius: 50%; text-align: center; cursor: pointer; font-weight: bold; }
+        .radio-wrapper input:checked + span { background: var(--success); color: white; transform: scale(1.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: var(--secondary); color: white; }
+        .qualified { background-color: #d4edda; font-weight: bold; }
+        .hidden { display: none; }
+        .action-btn { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; margin-top: 10px; }
+        .submit-btn { background: var(--success); }
+        .login-btn { background: var(--secondary); }
+        
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); overflow-y: auto; }
+        .modal-content { background-color: #fff; margin: 2% auto; padding: 25px; border: 1px solid #888; width: 90%; max-width: 800px; border-radius: 10px; }
+        .close-modal { float: left; font-size: 28px; font-weight: bold; cursor: pointer; }
+        details { margin-bottom: 10px; border: 1px solid #eee; padding: 5px; }
+        summary { cursor: pointer; padding: 10px; background: #f9f9f9; font-weight: bold; }
+        @media print { .no-print { display: none !important; } .container { box-shadow: none; } }
+    </style>
+</head>
+<body>
+
+<div class="header no-print"><h2>لجنة توظيف معلمي العلوم (Online)</h2></div>
+
+<div class="nav-buttons no-print" style="margin-top: 20px;">
+    <button class="nav-btn btn-eval" id="btnShowEval">👨‍🏫 دخول المقيم</button>
+    <button class="nav-btn btn-admin" id="btnShowAdmin">🔒 دخول الإدارة</button>
+</div>
+
+<div id="evaluatorPage" class="container">
+    <h3 style="color: var(--primary); text-align: center;">نموذج تقييم الأداء</h3>
+    <div class="form-group"><label>المعلم:</label><input type="text" id="candName"></div>
+    <div class="form-group"><label>المقيم:</label><input type="text" id="evalName"></div>
+    <div id="criteriaContainer">Loading...</div>
+    <button class="action-btn submit-btn" id="btnSubmit">إرسال التقييم</button>
+</div>
+
+<div id="adminLoginPage" class="container hidden" style="max-width: 400px; text-align: center;">
+    <h3>🔒 منطقة الإدارة</h3>
+    <input type="password" id="adminPass" placeholder="كلمة المرور">
+    <button class="action-btn login-btn" id="btnLogin">دخول</button>
+</div>
+
+<div id="adminDashboard" class="container hidden">
+    <div class="no-print" style="display:flex; justify-content:space-between;">
+        <h3>📊 النتائج الحية</h3>
+        <div>
+            <button class="nav-btn btn-admin" onclick="window.print()" style="padding:5px 15px; font-size:12px">طباعة</button>
+            <button id="btnLogout" style="padding:5px;">خروج</button>
+        </div>
+    </div>
+    
+    <div class="no-print" style="background:#e8f4f8; padding:15px; margin-bottom:15px; border-radius:5px;">
+        <label>اختبار التخصص (25):</label>
+        <div style="display:flex; gap:10px;">
+            <select id="selectCandidate" style="flex:2;"><option>جاري التحميل...</option></select>
+            <input type="number" id="writtenScoreInput" max="25" style="flex:1;">
+            <button id="btnSaveTest" style="background:var(--primary); color:white; border:none; padding:8px;">حفظ</button>
+        </div>
+    </div>
+
+    <table id="resultsTable">
+        <thead>
+            <tr><th>#</th><th>المعلم</th><th>المقيمين</th><th>التقييم (75)</th><th>الاختبار (25)</th><th>النهائي</th><th class="no-print">عرض</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal no-print" id="btnCloseModal">&times;</span>
+        <h2 id="modalTitle">تقرير</h2>
+        <div id="modalSummary" style="background:#f0f0f0; padding:10px; margin-bottom:10px;"></div>
+        <div id="evaluatorsBreakdown"></div>
+        <button class="action-btn login-btn no-print" onclick="window.print()">طباعة التقرير</button>
+    </div>
+</div>
+
+<script type="module">
+    // ==========================================================
+    // 🔴🔴 هام جداً: انسخ بيانات مشروعك من موقع فايربيز وضعها هنا
+    // ==========================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        // انسخ الـ Config من Project Settings في Firebase Console وضعه هنا
+        apiKey:"AIzaSyB2jsilWQtu4DUaaPsdVQ2lw6Q9_-bpwEI",
+        authDomain: "science-eval-app.firebaseapp.com",
+        projectId: "science-eval-app",
+        storageBucket: "science-eval-app.firebasestorage.app",
+        messagingSenderId: "789546485824",
+        appId: "1:789546485824:web:8e9c6d0895c82afe7db7a5"
+    };
+
+    // ==========================================================
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // === البيانات والثوابت ===
+    const criteriaList = [
+        { title: "التخطيط", sub: "وضوح الأهداف والفروق الفردية" },
+        { title: "إدارة الصف", sub: "التعامل مع المشاغبين" },
+        { title: "المحتوى العلمي", sub: "الماس والجرافيت" },
+        { title: "الاستراتيجيات", sub: "التبسيط والتفكير النقدي" },
+        { title: "التقنيات", sub: "بوربوينت والوسائط" },
+        { title: "التقويم", sub: "قياس الفهم" },
+        { title: "التواصل", sub: "تحفيز الطلاب وأولياء الأمور" }
+    ];
+
+    // === دوال العرض (UI Functions) ===
+    function renderCriteria() {
+        const container = document.getElementById('criteriaContainer');
+        container.innerHTML = "";
+        criteriaList.forEach((c, index) => {
+            let opts = "";
+            for(let i=1; i<=5; i++) opts += `<label class="radio-wrapper"><input type="radio" name="q_${index}" value="${i}"><span>${i}</span></label>`;
+            container.innerHTML += `<div class="form-group"><label>${c.title}</label><span class="sub-label">${c.sub}</span><div class="rating-box">${opts}</div></div>`;
+        });
+    }
+
+    // === دوال التفاعل مع Firestore ===
+    window.submitEvaluation = async () => {
+        const teacher = document.getElementById('candName').value.trim();
+        const evaluator = document.getElementById('evalName').value.trim();
+        if(!teacher || !evaluator) { alert("أكمل البيانات"); return; }
+
+        let answers = [];
+        let allAnswered = true;
+        criteriaList.forEach((_, i) => {
+            const sel = document.querySelector(`input[name="q_${i}"]:checked`);
+            if(sel) answers.push(parseInt(sel.value)); else allAnswered = false;
+        });
+
+        if(!allAnswered) { alert("أكمل جميع البنود"); return; }
+
+        try {
+            document.getElementById('btnSubmit').innerText = "جاري الحفظ...";
+            await addDoc(collection(db, "evaluations"), {
+                teacher, evaluator, answers, timestamp: new Date().toISOString()
+            });
+            alert("تم الحفظ في قاعدة البيانات!");
+            location.reload();
+        } catch (e) {
+            console.error(e);
+            alert("خطأ في الاتصال: " + e.message);
+        }
+        document.getElementById('btnSubmit').innerText = "إرسال التقييم";
+    };
+
+    window.calculateResults = async () => {
+        document.querySelector('tbody').innerHTML = "<tr><td colspan='7'>جاري تحميل البيانات من السحابة...</td></tr>";
+        
+        try {
+            const evalSnapshot = await getDocs(collection(db, "evaluations"));
+            const evaluations = [];
+            evalSnapshot.forEach(doc => evaluations.push(doc.data()));
+
+            const testSnapshot = await getDocs(collection(db, "tests"));
+            const testScores = {};
+            testSnapshot.forEach(doc => { testScores[doc.data().teacher] = doc.data().score; });
+
+            let grouped = {};
+            evaluations.forEach(ev => {
+                if(!grouped[ev.teacher]) grouped[ev.teacher] = { name: ev.teacher, rawSum: 0, count: 0, details: [] };
+                let sum = ev.answers.reduce((a,b)=>a+b, 0);
+                grouped[ev.teacher].rawSum += sum;
+                grouped[ev.teacher].count++;
+                grouped[ev.teacher].details.push({ evalName: ev.evaluator, answers: ev.answers, sum });
+            });
+
+            let results = Object.values(grouped).map(c => {
+                let avgPed = (c.rawSum / (c.count * (criteriaList.length * 5))) * 75;
+                let test = testScores[c.name] || 0;
+                return {
+                    ...c,
+                    avgPed: avgPed.toFixed(1),
+                    test: test,
+                    final: (avgPed + test).toFixed(1)
+                };
+            });
+
+            results.sort((a,b) => b.final - a.final);
+            renderTable(results);
+            updateCandidateSelect(results.map(r => r.name));
+            window.allResults = results;
+        } catch (e) {
+            console.error(e);
+            alert("تأكد أن قاعدة البيانات في وضع Test Mode");
+        }
+    };
+
+    function renderTable(data) {
+        const tbody = document.querySelector('tbody');
+        tbody.innerHTML = "";
+        data.forEach((r, i) => {
+            let cls = i < 5 ? "qualified" : "";
+            tbody.innerHTML += `
+                <tr class="${cls}">
+                    <td>${i+1}</td><td>${r.name}</td><td>${r.count}</td>
+                    <td>${r.avgPed}</td><td>${r.test}</td><td>${r.final}</td>
+                    <td class="no-print"><button onclick="showDetails('${r.name}')">👁️</button></td>
+                </tr>`;
+        });
+    }
+
+    window.saveTestScore = async () => {
+        const teacher = document.getElementById('selectCandidate').value;
+        const score = parseFloat(document.getElementById('writtenScoreInput').value);
+        if(!teacher || isNaN(score)) return;
+
+        const q = query(collection(db, "tests"), where("teacher", "==", teacher));
+        const snap = await getDocs(q);
+        
+        if(!snap.empty) {
+            const docId = snap.docs[0].id;
+            await updateDoc(doc(db, "tests", docId), { score });
+        } else {
+            await addDoc(collection(db, "tests"), { teacher, score });
+        }
+        alert("تم الحفظ");
+        calculateResults();
+    };
+
+    function updateCandidateSelect(names) {
+        const sel = document.getElementById('selectCandidate');
+        sel.innerHTML = "<option value=''>اختر المعلم...</option>";
+        names.forEach(n => sel.innerHTML += `<option value="${n}">${n}</option>`);
+    }
+
+    window.showDetails = (name) => {
+        const r = window.allResults.find(x => x.name === name);
+        if(!r) return;
+        document.getElementById('detailsModal').style.display = "block";
+        document.getElementById('modalTitle').innerText = "تقرير: " + name;
+        document.getElementById('modalSummary').innerHTML = `التربوي: ${r.avgPed} | التخصص: ${r.test} | <b>النهائي: ${r.final}</b>`;
+        
+        const div = document.getElementById('evaluatorsBreakdown');
+        div.innerHTML = "";
+        r.details.forEach(d => {
+            let rows = "";
+            d.answers.forEach((ans, idx) => {
+                rows += `<tr><td style='text-align:right'>${criteriaList[idx].title}</td><td>${ans}</td></tr>`;
+            });
+            div.innerHTML += `
+                <details>
+                    <summary>👤 ${d.evalName} (${d.sum})</summary>
+                    <table style="width:100%">${rows}</table>
+                </details>`;
+        });
+    };
+
+    document.getElementById('btnSubmit').onclick = window.submitEvaluation;
+    document.getElementById('btnSaveTest').onclick = window.saveTestScore;
+    document.getElementById('btnShowEval').onclick = () => { document.getElementById('evaluatorPage').classList.remove('hidden'); document.getElementById('adminLoginPage').classList.add('hidden'); document.getElementById('adminDashboard').classList.add('hidden'); };
+    document.getElementById('btnShowAdmin').onclick = () => { document.getElementById('adminLoginPage').classList.remove('hidden'); document.getElementById('evaluatorPage').classList.add('hidden'); };
+    document.getElementById('btnLogin').onclick = () => {
+        if(document.getElementById('adminPass').value === "admin") {
+            document.getElementById('adminLoginPage').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            window.calculateResults();
+        } else alert("خطأ");
+    };
+    document.getElementById('btnLogout').onclick = document.getElementById('btnShowEval').onclick;
+    document.getElementById('btnCloseModal').onclick = () => document.getElementById('detailsModal').style.display = "none";
+    
+    renderCriteria();
+</script>
+
+</body>
+</html>
