@@ -76,7 +76,21 @@
         summary { cursor: pointer; padding: 10px; background: #f9f9f9; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .note-box { background: #fff3cd; padding: 10px; border-right: 4px solid #ffc107; margin: 10px 0; font-size: 0.9em; border-radius: 4px; }
 
-        @media print { .no-print { display: none !important; } .container { box-shadow: none; width: 100%; max-width: 100%; margin: 0; } }
+        @media print { 
+            .no-print { display: none !important; } 
+            .container { box-shadow: none; width: 100%; max-width: 100%; margin: 0; }
+            
+            /* تحسين طباعة المودال (التقرير المفصل) */
+            .modal { position: static; height: auto; overflow: visible; background: white; }
+            .modal-content { border: none; width: 100%; margin: 0; padding: 0; max-width: 100%; }
+            /* إجبار التفاصيل على الظهور عند الطباعة */
+            details { break-inside: avoid; display: block !important; }
+            details[open] summary ~ * { display: block; }
+            
+            /* إخفاء المحتوى الخلفي إذا كان المودال مفتوحاً */
+            body.modal-open > *:not(#detailsModal) { display: none; }
+            body.modal-open #detailsModal { display: block; }
+        }
     </style>
 </head>
 <body>
@@ -89,7 +103,7 @@
 </div>
 
 <div id="evaluatorPage" class="container">
-    <h3 style="color: var(--primary); text-align: center;">نموذج تقييم الأداء</h3>
+    <h3 style="color: var(--primary); text-align: center;">نموذج تقييم الأداء (العلوم)</h3>
     <div class="form-group">
         <label>اسم المعلم المرشح:</label>
         <input type="text" id="candName" placeholder="اكتب الاسم ثلاثي...">
@@ -126,7 +140,7 @@
             </div>
 
             <div style="margin-right: 15px;">
-                <button class="nav-btn btn-admin" onclick="window.print()" style="padding:8px 15px; font-size:14px">طباعة</button>
+                <button class="nav-btn btn-admin" onclick="window.print()" style="padding:8px 15px; font-size:14px">طباعة الجدول</button>
                 <button id="btnLogout" style="padding:8px 15px; cursor: pointer; border: 1px solid #ddd; background: white; border-radius: 20px;">خروج</button>
             </div>
         </div>
@@ -213,7 +227,7 @@
         <h4>تفاصيل تقييمات اللجنة:</h4>
         <div id="evaluatorsBreakdown"></div>
         
-        <button class="action-btn login-btn no-print" onclick="window.print()" style="width: auto; padding: 10px 30px;">طباعة التقرير</button>
+        <button class="action-btn login-btn no-print" onclick="window.printReport()" style="width: auto; padding: 10px 30px; margin-top:20px;">🖨️ طباعة التقرير كاملاً</button>
     </div>
 </div>
 
@@ -236,15 +250,15 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // === البيانات والثوابت ===
+    // === البيانات والثوابت (بنود التقييم الجديدة) ===
     const criteriaList = [
-        { title: "1. التخطيط للدرس", sub: "وضوح الأهداف، مراعاة الفروق الفردية، التسلسل المنطقي" },
-        { title: "2. إدارة الصف", sub: "القدرة على ضبط الصف، التعامل مع السلوكيات، جذب الانتباه" },
-        { title: "3. التمكن العلمي", sub: "صحة المعلومات (مثال: الفرق بين الماس والجرافيت)، العمق العلمي" },
-        { title: "4. استراتيجيات التدريس", sub: "التنوع، التبسيط، تشجيع التفكير النقدي" },
-        { title: "5. استخدام التقنية", sub: "تفعيل الوسائل، العروض التقديمية، التجارب الافتراضية" },
-        { title: "6. التقويم والتغذية الراجعة", sub: "التأكد من الفهم، الأسئلة الصفية" },
-        { title: "7. السمات الشخصية والتواصل", sub: "الثقة بالنفس، نبرة الصوت، التحفيز" }
+        { title: "1. المهارات التربوية", sub: "تشمل التخطيط، إدارة الصف، تقييم الطلاب، الفروق الفردية" },
+        { title: "2. المعرفة العلمية", sub: "وتشمل التمكن من المحتوى العلمي وصحته" },
+        { title: "3. استراتيجيات التدريس", sub: "تنوع الأساليب، التعلم النشط، التبسيط" },
+        { title: "4. التقويم والمتابعة", sub: "قياس الفهم، التغذية الراجعة، المتابعة المستمرة" },
+        { title: "5. المهارات التقنية", sub: "استخدام التكنولوجيا، الوسائل الحديثة، التطبيقات" },
+        { title: "6. التواصل", sub: "التواصل الفعال مع الطلاب وأولياء الأمور" },
+        { title: "7. السمات الشخصية", sub: "الثقة، المظهر، القدوة، الاتزان" }
     ];
 
     // === دوال واجهة المستخدم ===
@@ -327,7 +341,6 @@
 
     // === حساب النتائج وعرض الجدول ===
     window.calculateResults = async () => {
-        // إذا كان هناك بيانات سابقة مخزنة في الذاكرة، استخدمها لتسريع التحديث عند تغيير الرقم فقط
         if(window.isDataLoaded && window.allResults) {
             renderTable(window.allResults);
             return;
@@ -360,7 +373,11 @@
             let grouped = {};
             evaluations.forEach(ev => {
                 if(!grouped[ev.teacher]) grouped[ev.teacher] = { name: ev.teacher, rawSum: 0, count: 0, details: [] };
+                
+                // التأكد من أن عدد الإجابات يتوافق مع المعايير الحالية (لتجنب الأخطاء مع البيانات القديمة)
+                // إذا كانت البيانات قديمة (أقل من 7 بنود)، نعتبرها صالحة للحساب ولكن قد تؤثر على الدقة
                 let sum = ev.answers.reduce((a,b)=>a+b, 0);
+                
                 grouped[ev.teacher].rawSum += sum;
                 grouped[ev.teacher].count++;
                 grouped[ev.teacher].details.push({ 
@@ -376,8 +393,10 @@
             let results = Object.values(grouped).map(c => {
                 const cData = candMap[c.name] || { writtenScore: 0, writtenMax: 25, age: 0, hasLicense: false, licenseSpec: 0, licensePed: 0 };
                 
-                // معادلة المقابلة: (مجموع الدرجات / (عدد المقيمين * 35)) * 75
-                let avgPed = (c.rawSum / (c.count * (criteriaList.length * 5))) * 75;
+                // معادلة المقابلة: نأخذ المتوسط بالنسبة المئوية ثم نضربه في 75
+                // ملاحظة: بما أن عدد الأسئلة ثابت (7) والدرجة العظمى (5)
+                const maxPossiblePerEval = criteriaList.length * 5; 
+                let avgPed = (c.rawSum / (c.count * maxPossiblePerEval)) * 75;
                 
                 return {
                     ...c,
@@ -394,7 +413,6 @@
             renderTable(results);
             updateCandidateSelect(results.map(r => r.name));
             
-            // تعبئة البيانات في فورم الأدمن عند تغيير الاختيار
             document.getElementById('selectCandidate').onchange = (e) => fillAdminForm(e.target.value);
 
         } catch (e) {
@@ -412,20 +430,17 @@
             let isQualified = i < targetCount;
             let rowClass = isQualified ? "qualified" : "waitlist";
             
-            // حالة المرشح (نص)
             let statusBadge = isQualified 
                 ? `<span class="badge badge-success">✅ مرشح</span>` 
                 : `<span class="badge badge-warning">⏳ احتياط</span>`;
 
-            // منطق العمر
             let ageDisplay = r.cData.age ? `<span class="${r.cData.age > 42 ? 'age-red' : 'age-green'}">${r.cData.age}</span>` : "-";
             
-            // منطق أيقونة الرخصة
             let licIcon = "❌";
             if (r.cData.hasLicense) {
-                if(r.cData.licenseSpec > 0 && r.cData.licensePed > 0) licIcon = "🏅"; // كلاهما
-                else if (r.cData.licenseSpec > 0) licIcon = "🧪"; // تخصص فقط
-                else if (r.cData.licensePed > 0) licIcon = "📖"; // تربوي فقط
+                if(r.cData.licenseSpec > 0 && r.cData.licensePed > 0) licIcon = "🏅"; 
+                else if (r.cData.licenseSpec > 0) licIcon = "🧪"; 
+                else if (r.cData.licensePed > 0) licIcon = "📖"; 
             }
 
             tbody.innerHTML += `
@@ -463,34 +478,31 @@
         if(names.includes(currentVal)) sel.value = currentVal;
     }
 
-    // === حذف تقييم محدد ===
     window.deleteEval = async (id, teacherName) => {
         if(!confirm("هل أنت متأكد تماماً من حذف هذا التقييم؟ لا يمكن التراجع عن هذا الإجراء.")) return;
-        
         try {
             await deleteDoc(doc(db, "evaluations", id));
             alert("تم حذف التقييم.");
             document.getElementById('detailsModal').style.display = "none";
-            window.isDataLoaded = false; // لإجبار إعادة التحميل
-            calculateResults(); // تحديث الجدول
+            window.isDataLoaded = false; 
+            calculateResults(); 
         } catch(e) {
             alert("فشل الحذف: " + e.message);
         }
     }
 
-    // === عرض التفاصيل ===
+    // === عرض التفاصيل والطباعة ===
     window.showDetails = (name) => {
         const r = window.allResults.find(x => x.name === name);
         if(!r) return;
         document.getElementById('detailsModal').style.display = "block";
+        document.body.classList.add('modal-open'); // فئة للتحكم بالطباعة
         document.getElementById('modalTitle').innerText = "تقرير المعلم: " + name;
         
-        // تفاصيل الرخصة
         let licText = r.cData.hasLicense 
             ? `نعم (تخصص: ${r.cData.licenseSpec}، تربوي: ${r.cData.licensePed})` 
             : "لا يوجد";
             
-        // تحديد الحالة في المودال
         const targetCount = parseInt(document.getElementById('targetCount').value) || 5;
         const rank = window.allResults.indexOf(r) + 1;
         const statusText = rank <= targetCount ? "✅ مرشح" : "⏳ احتياط";
@@ -512,7 +524,9 @@
         r.details.forEach(d => {
             let rows = "";
             d.answers.forEach((ans, idx) => {
-                rows += `<tr><td style='text-align:right'>${criteriaList[idx].title}</td><td><b>${ans}</b></td></tr>`;
+                // استخدام اسم البند إذا كان متوفراً، وإلا فاستخدام الفهرس (للتوافق مع بيانات قديمة إن وجدت)
+                let critTitle = criteriaList[idx] ? criteriaList[idx].title : `بند رقم ${idx+1}`;
+                rows += `<tr><td style='text-align:right'>${critTitle}</td><td><b>${ans}</b></td></tr>`;
             });
             
             let notesHtml = d.notes ? `<div class="note-box">📝 <b>ملاحظات المقيم:</b> ${d.notes}</div>` : "";
@@ -531,11 +545,23 @@
         });
     };
 
+    // دالة خاصة لطباعة التقرير وفتح جميع التفاصيل
+    window.printReport = () => {
+        // فتح كل عناصر details لرؤية المحتوى عند الطباعة
+        const details = document.querySelectorAll('#evaluatorsBreakdown details');
+        details.forEach(d => d.open = true);
+        
+        window.print();
+        
+        // (اختياري) إغلاقها مرة أخرى بعد الطباعة للحفاظ على الترتيب في الشاشة، 
+        // لكن المتصفحات الحديثة قد تنفذ الكود قبل انتهاء الطباعة فعلياً. 
+        // الأفضل تركها مفتوحة أو استخدام CSS للتحكم.
+    };
+
     // ربط الأزرار
     document.getElementById('btnSubmit').onclick = window.submitEvaluation;
     document.getElementById('btnSaveCandidateData').onclick = window.saveCandidateData;
     
-    // التنقل
     document.getElementById('btnShowEval').onclick = () => { 
         document.getElementById('evaluatorPage').classList.remove('hidden'); 
         document.getElementById('adminLoginPage').classList.add('hidden'); 
@@ -547,7 +573,6 @@
         document.getElementById('evaluatorPage').classList.add('hidden'); 
     };
 
-    // تسجيل الدخول
     document.getElementById('btnLogin').onclick = () => {
         if(document.getElementById('adminPass').value === "admin") {
             document.getElementById('adminLoginPage').classList.add('hidden');
@@ -558,7 +583,10 @@
     };
 
     document.getElementById('btnLogout').onclick = () => location.reload();
-    document.getElementById('btnCloseModal').onclick = () => document.getElementById('detailsModal').style.display = "none";
+    document.getElementById('btnCloseModal').onclick = () => {
+        document.getElementById('detailsModal').style.display = "none";
+        document.body.classList.remove('modal-open');
+    };
     
     // تهيئة الصفحة
     renderCriteria();
