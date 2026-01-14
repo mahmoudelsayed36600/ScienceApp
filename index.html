@@ -3,41 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام تقييم معلمي العلوم - أونلاين</title>
+    <title>نظام تقييم معلمي العلوم - المطور</title>
     <style>
-        /* نفس التصميم الأنيق السابق */
-        :root { --primary: #2980b9; --secondary: #2c3e50; --success: #27ae60; --bg: #f4f7f6; }
+        :root { --primary: #2980b9; --secondary: #2c3e50; --success: #27ae60; --danger: #c0392b; --warning: #f39c12; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 0; }
         .header { background: var(--secondary); color: white; padding: 15px; text-align: center; }
-        .container { max-width: 900px; margin: 20px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .container { max-width: 1000px; margin: 20px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        
+        /* أزرار التنقل */
         .nav-buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
-        .nav-btn { padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; }
+        .nav-btn { padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
         .btn-eval { background: var(--primary); }
         .btn-admin { background: #e74c3c; }
-        .form-group { margin-bottom: 20px; border-bottom: 1px dashed #ddd; padding-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--secondary); }
-        .sub-label { font-size: 0.9em; color: #666; display: block; margin-bottom: 10px;}
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .rating-box { display: flex; gap: 10px; justify-content: space-between; max-width: 400px; }
+        
+        /* تحسينات المدخلات للمقيم (تكبير الخط) */
+        .form-group { margin-bottom: 25px; border-bottom: 1px dashed #ddd; padding-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 10px; color: var(--secondary); font-size: 1.1em; }
+        .sub-label { font-size: 0.95em; color: #666; display: block; margin-bottom: 12px;}
+        input[type="text"], input[type="number"], select, textarea { 
+            width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 6px; 
+            box-sizing: border-box; font-size: 18px; /* تكبير الخط */
+        }
+        textarea { resize: vertical; height: 100px; font-family: inherit; }
+
+        /* نظام التقييم (الدوائر) */
+        .rating-box { display: flex; gap: 15px; justify-content: space-between; max-width: 500px; margin-top: 10px; }
         .radio-wrapper input { display: none; }
-        .radio-wrapper span { display: inline-block; width: 40px; height: 40px; line-height: 40px; background: #eee; border-radius: 50%; text-align: center; cursor: pointer; font-weight: bold; }
-        .radio-wrapper input:checked + span { background: var(--success); color: white; transform: scale(1.1); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .radio-wrapper span { display: inline-block; width: 45px; height: 45px; line-height: 45px; background: #eee; border-radius: 50%; text-align: center; cursor: pointer; font-weight: bold; font-size: 18px; transition: 0.2s; }
+        .radio-wrapper input:checked + span { background: var(--success); color: white; transform: scale(1.15); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        /* الجداول ولوحة التحكم */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95em; }
+        th, td { border: 1px solid #ddd; padding: 12px 8px; text-align: center; }
         th { background: var(--secondary); color: white; }
-        .qualified { background-color: #d4edda; font-weight: bold; }
+        .qualified { background-color: #d4edda; font-weight: bold; } /* للمرشحين */
+        .waitlist { background-color: #fff3cd; } /* للاحتياط */
+        
+        /* تنسيقات خاصة للعمر والرخصة */
+        .age-red { color: var(--danger); font-weight: bold; }
+        .age-green { color: var(--success); font-weight: bold; }
+        .license-icon { font-size: 1.2em; }
+        
+        /* الشارات (Badges) */
+        .badge { padding: 5px 10px; border-radius: 15px; color: white; font-size: 0.85em; display: inline-block; min-width: 60px;}
+        .badge-success { background-color: var(--success); }
+        .badge-warning { background-color: var(--warning); color: #fff; }
+
+        /* أدوات التحكم والأزرار */
         .hidden { display: none; }
-        .action-btn { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; margin-top: 10px; }
+        .action-btn { width: 100%; padding: 15px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; margin-top: 15px; font-size: 18px; }
         .submit-btn { background: var(--success); }
         .login-btn { background: var(--secondary); }
-        
+        .delete-btn { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 10px;}
+
+        /* لوحة التحكم بالإدارة */
+        .admin-panel { background: #e8f4f8; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #b3d7e8; }
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end; }
+        .small-input { font-size: 14px !important; padding: 8px !important; }
+        .checkbox-wrapper { display: flex; align-items: center; gap: 10px; background: white; padding: 10px; border-radius: 4px; border: 1px solid #ddd; height: 42px; box-sizing: border-box;}
+        .checkbox-wrapper input { width: auto; margin: 0; }
+        .checkbox-wrapper label { margin: 0; font-size: 14px; cursor: pointer; }
+
+        /* مدخل عدد المرشحين */
+        .target-box { background: white; padding: 10px 20px; border-radius: 30px; border: 2px solid var(--primary); display: flex; align-items: center; gap: 10px; margin-left: 15px; }
+        .target-box input { width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; font-size: 16px; border-radius: 5px; }
+
         /* Modal Styles */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); overflow-y: auto; }
-        .modal-content { background-color: #fff; margin: 2% auto; padding: 25px; border: 1px solid #888; width: 90%; max-width: 800px; border-radius: 10px; }
+        .modal-content { background-color: #fff; margin: 2% auto; padding: 25px; border: 1px solid #888; width: 95%; max-width: 850px; border-radius: 10px; }
         .close-modal { float: left; font-size: 28px; font-weight: bold; cursor: pointer; }
-        details { margin-bottom: 10px; border: 1px solid #eee; padding: 5px; }
-        summary { cursor: pointer; padding: 10px; background: #f9f9f9; font-weight: bold; }
-        @media print { .no-print { display: none !important; } .container { box-shadow: none; } }
+        details { margin-bottom: 10px; border: 1px solid #eee; padding: 5px; border-radius: 5px; }
+        summary { cursor: pointer; padding: 10px; background: #f9f9f9; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .note-box { background: #fff3cd; padding: 10px; border-right: 4px solid #ffc107; margin: 10px 0; font-size: 0.9em; border-radius: 4px; }
+
+        @media print { .no-print { display: none !important; } .container { box-shadow: none; width: 100%; max-width: 100%; margin: 0; } }
     </style>
 </head>
 <body>
@@ -51,9 +90,22 @@
 
 <div id="evaluatorPage" class="container">
     <h3 style="color: var(--primary); text-align: center;">نموذج تقييم الأداء</h3>
-    <div class="form-group"><label>المعلم:</label><input type="text" id="candName"></div>
-    <div class="form-group"><label>المقيم:</label><input type="text" id="evalName"></div>
+    <div class="form-group">
+        <label>اسم المعلم المرشح:</label>
+        <input type="text" id="candName" placeholder="اكتب الاسم ثلاثي...">
+    </div>
+    <div class="form-group">
+        <label>اسم المقيم (عضو اللجنة):</label>
+        <input type="text" id="evalName" placeholder="اكتب اسمك...">
+    </div>
+    
     <div id="criteriaContainer">Loading...</div>
+    
+    <div class="form-group">
+        <label>ملاحظات إضافية (اختياري):</label>
+        <textarea id="evalNotes" placeholder="اكتب أي ملاحظات هامة هنا..."></textarea>
+    </div>
+
     <button class="action-btn submit-btn" id="btnSubmit">إرسال التقييم</button>
 </div>
 
@@ -64,50 +116,115 @@
 </div>
 
 <div id="adminDashboard" class="container hidden">
-    <div class="no-print" style="display:flex; justify-content:space-between;">
-        <h3>📊 النتائج الحية</h3>
-        <div>
-            <button class="nav-btn btn-admin" onclick="window.print()" style="padding:5px 15px; font-size:12px">طباعة</button>
-            <button id="btnLogout" style="padding:5px;">خروج</button>
+    <div class="no-print" style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <h3 style="margin:0;">📊 لوحة النتائج والتحكم</h3>
+        
+        <div style="display: flex; align-items: center;">
+             <div class="target-box">
+                <label for="targetCount">عدد الشواغر:</label>
+                <input type="number" id="targetCount" value="5" min="1" onchange="window.calculateResults()">
+            </div>
+
+            <div style="margin-right: 15px;">
+                <button class="nav-btn btn-admin" onclick="window.print()" style="padding:8px 15px; font-size:14px">طباعة</button>
+                <button id="btnLogout" style="padding:8px 15px; cursor: pointer; border: 1px solid #ddd; background: white; border-radius: 20px;">خروج</button>
+            </div>
         </div>
     </div>
     
-    <div class="no-print" style="background:#e8f4f8; padding:15px; margin-bottom:15px; border-radius:5px;">
-        <label>اختبار التخصص (25):</label>
-        <div style="display:flex; gap:10px;">
-            <select id="selectCandidate" style="flex:2;"><option>جاري التحميل...</option></select>
-            <input type="number" id="writtenScoreInput" max="25" style="flex:1;">
-            <button id="btnSaveTest" style="background:var(--primary); color:white; border:none; padding:8px;">حفظ</button>
+    <div class="admin-panel no-print">
+        <h4 style="margin-top:0; color:var(--secondary);">📝 إدارة بيانات المرشح</h4>
+        <div class="admin-grid">
+            <div style="grid-column: span 2;">
+                <label style="font-size:14px;">اختر المعلم:</label>
+                <select id="selectCandidate" class="small-input"><option>جاري التحميل...</option></select>
+            </div>
+            
+            <div>
+                <label style="font-size:14px;">العمر:</label>
+                <input type="number" id="candAge" class="small-input" placeholder="مثال: 35">
+            </div>
+
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="hasLicense">
+                <label for="hasLicense">يوجد رخصة؟</label>
+            </div>
+
+            <div>
+                <label style="font-size:14px;">درجة التخصص (الرخصة):</label>
+                <input type="number" id="licenseSpec" class="small-input" placeholder="مثال: 80">
+            </div>
+            
+            <div>
+                <label style="font-size:14px;">درجة التربوي (الرخصة):</label>
+                <input type="number" id="licensePed" class="small-input" placeholder="مثال: 75">
+            </div>
+
+            <div>
+                <label style="font-size:14px;">درجة الاختبار التحريري:</label>
+                <input type="number" id="writtenScore" class="small-input" placeholder="الدرجة">
+            </div>
+
+            <div>
+                <label style="font-size:14px;">الدرجة العظمى للاختبار:</label>
+                <input type="number" id="writtenMax" class="small-input" value="25" placeholder="من كم؟">
+            </div>
+
+            <button id="btnSaveCandidateData" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:4px; cursor:pointer; height:42px;">حفظ البيانات</button>
         </div>
     </div>
 
-    <table id="resultsTable">
-        <thead>
-            <tr><th>#</th><th>المعلم</th><th>المقيمين</th><th>التقييم (75)</th><th>الاختبار (25)</th><th>النهائي</th><th class="no-print">عرض</th></tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div style="overflow-x: auto;">
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th rowspan="2">#</th>
+                    <th rowspan="2">المعلم</th>
+                    <th rowspan="2">العمر</th>
+                    <th rowspan="2">الرخصة</th>
+                    <th colspan="3">التقييمات</th>
+                    <th rowspan="2">الحالة</th>
+                    <th rowspan="2" class="no-print">تفاصيل</th>
+                </tr>
+                <tr>
+                    <th>المقابلة (75)</th>
+                    <th>الاختبار</th>
+                    <th>النهائي</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    
+    <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
+        <span style="margin-left: 15px;">🏅: رخصة كاملة (تخصص+تربوي)</span>
+        <span style="margin-left: 15px;">🧪: تخصص فقط</span>
+        <span style="margin-left: 15px;">📖: تربوي فقط</span>
+        <span>❌: لا يوجد رخصة</span>
+    </div>
 </div>
 
 <div id="detailsModal" class="modal">
     <div class="modal-content">
         <span class="close-modal no-print" id="btnCloseModal">&times;</span>
-        <h2 id="modalTitle">تقرير</h2>
-        <div id="modalSummary" style="background:#f0f0f0; padding:10px; margin-bottom:10px;"></div>
+        <h2 id="modalTitle">تقرير مفصل</h2>
+        <div id="modalSummary" style="background:#f8f9fa; padding:15px; margin-bottom:15px; border-radius: 8px; border: 1px solid #ddd;"></div>
+        
+        <h4>تفاصيل تقييمات اللجنة:</h4>
         <div id="evaluatorsBreakdown"></div>
-        <button class="action-btn login-btn no-print" onclick="window.print()">طباعة التقرير</button>
+        
+        <button class="action-btn login-btn no-print" onclick="window.print()" style="width: auto; padding: 10px 30px;">طباعة التقرير</button>
     </div>
 </div>
 
 <script type="module">
     // ==========================================================
-    // 🔴🔴 هام جداً: انسخ بيانات مشروعك من موقع فايربيز وضعها هنا
+    // تهيئة Firebase
     // ==========================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
-        // انسخ الـ Config من Project Settings في Firebase Console وضعه هنا
         apiKey:"AIzaSyB2jsilWQtu4DUaaPsdVQ2lw6Q9_-bpwEI",
         authDomain: "science-eval-app.firebaseapp.com",
         projectId: "science-eval-app",
@@ -116,23 +233,21 @@
         appId: "1:789546485824:web:8e9c6d0895c82afe7db7a5"
     };
 
-    // ==========================================================
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     // === البيانات والثوابت ===
     const criteriaList = [
-        { title: "التخطيط", sub: "وضوح الأهداف والفروق الفردية" },
-        { title: "إدارة الصف", sub: "التعامل مع المشاغبين" },
-        { title: "المحتوى العلمي", sub: "الماس والجرافيت" },
-        { title: "الاستراتيجيات", sub: "التبسيط والتفكير النقدي" },
-        { title: "التقنيات", sub: "بوربوينت والوسائط" },
-        { title: "التقويم", sub: "قياس الفهم" },
-        { title: "التواصل", sub: "تحفيز الطلاب وأولياء الأمور" }
+        { title: "1. التخطيط للدرس", sub: "وضوح الأهداف، مراعاة الفروق الفردية، التسلسل المنطقي" },
+        { title: "2. إدارة الصف", sub: "القدرة على ضبط الصف، التعامل مع السلوكيات، جذب الانتباه" },
+        { title: "3. التمكن العلمي", sub: "صحة المعلومات (مثال: الفرق بين الماس والجرافيت)، العمق العلمي" },
+        { title: "4. استراتيجيات التدريس", sub: "التنوع، التبسيط، تشجيع التفكير النقدي" },
+        { title: "5. استخدام التقنية", sub: "تفعيل الوسائل، العروض التقديمية، التجارب الافتراضية" },
+        { title: "6. التقويم والتغذية الراجعة", sub: "التأكد من الفهم، الأسئلة الصفية" },
+        { title: "7. السمات الشخصية والتواصل", sub: "الثقة بالنفس، نبرة الصوت، التحفيز" }
     ];
 
-    // === دوال العرض (UI Functions) ===
+    // === دوال واجهة المستخدم ===
     function renderCriteria() {
         const container = document.getElementById('criteriaContainer');
         container.innerHTML = "";
@@ -143,11 +258,13 @@
         });
     }
 
-    // === دوال التفاعل مع Firestore ===
+    // === إرسال التقييم ===
     window.submitEvaluation = async () => {
         const teacher = document.getElementById('candName').value.trim();
         const evaluator = document.getElementById('evalName').value.trim();
-        if(!teacher || !evaluator) { alert("أكمل البيانات"); return; }
+        const notes = document.getElementById('evalNotes').value.trim();
+        
+        if(!teacher || !evaluator) { alert("الرجاء إدخال اسم المعلم واسم المقيم"); return; }
 
         let answers = [];
         let allAnswered = true;
@@ -156,138 +273,294 @@
             if(sel) answers.push(parseInt(sel.value)); else allAnswered = false;
         });
 
-        if(!allAnswered) { alert("أكمل جميع البنود"); return; }
+        if(!allAnswered) { alert("الرجاء تقييم جميع البنود السبعة"); return; }
 
         try {
-            document.getElementById('btnSubmit').innerText = "جاري الحفظ...";
+            const btn = document.getElementById('btnSubmit');
+            btn.innerText = "جاري الحفظ..."; btn.disabled = true;
+            
             await addDoc(collection(db, "evaluations"), {
-                teacher, evaluator, answers, timestamp: new Date().toISOString()
+                teacher, evaluator, answers, notes, timestamp: new Date().toISOString()
             });
-            alert("تم الحفظ في قاعدة البيانات!");
+            
+            alert("✅ تم حفظ التقييم بنجاح!");
             location.reload();
         } catch (e) {
             console.error(e);
-            alert("خطأ في الاتصال: " + e.message);
+            alert("حدث خطأ أثناء الحفظ: " + e.message);
+            document.getElementById('btnSubmit').innerText = "إرسال التقييم";
+            document.getElementById('btnSubmit').disabled = false;
         }
-        document.getElementById('btnSubmit').innerText = "إرسال التقييم";
     };
 
+    // === حفظ بيانات المرشح (الأدمن) ===
+    window.saveCandidateData = async () => {
+        const teacher = document.getElementById('selectCandidate').value;
+        if(!teacher) { alert("اختر معلماً أولاً"); return; }
+
+        const age = parseInt(document.getElementById('candAge').value) || 0;
+        const hasLicense = document.getElementById('hasLicense').checked;
+        const licenseSpec = parseFloat(document.getElementById('licenseSpec').value) || 0;
+        const licensePed = parseFloat(document.getElementById('licensePed').value) || 0;
+        const writtenScore = parseFloat(document.getElementById('writtenScore').value) || 0;
+        const writtenMax = parseFloat(document.getElementById('writtenMax').value) || 25;
+
+        try {
+            const q = query(collection(db, "candidate_data"), where("teacher", "==", teacher));
+            const snap = await getDocs(q);
+            
+            const dataObj = { 
+                teacher, age, hasLicense, licenseSpec, licensePed, writtenScore, writtenMax 
+            };
+
+            if(!snap.empty) {
+                await updateDoc(doc(db, "candidate_data", snap.docs[0].id), dataObj);
+            } else {
+                await addDoc(collection(db, "candidate_data"), dataObj);
+            }
+            alert("✅ تم تحديث بيانات المرشح");
+            calculateResults(); // إعادة تحميل الجدول
+        } catch(e) {
+            alert("خطأ: " + e.message);
+        }
+    };
+
+    // === حساب النتائج وعرض الجدول ===
     window.calculateResults = async () => {
-        document.querySelector('tbody').innerHTML = "<tr><td colspan='7'>جاري تحميل البيانات من السحابة...</td></tr>";
+        // إذا كان هناك بيانات سابقة مخزنة في الذاكرة، استخدمها لتسريع التحديث عند تغيير الرقم فقط
+        if(window.isDataLoaded && window.allResults) {
+            renderTable(window.allResults);
+            return;
+        }
+
+        document.querySelector('tbody').innerHTML = "<tr><td colspan='10'>جاري جلب البيانات وتحليلها...</td></tr>";
         
         try {
+            // 1. جلب التقييمات
             const evalSnapshot = await getDocs(collection(db, "evaluations"));
             const evaluations = [];
-            evalSnapshot.forEach(doc => evaluations.push(doc.data()));
+            evalSnapshot.forEach(d => evaluations.push({ id: d.id, ...d.data() }));
 
-            const testSnapshot = await getDocs(collection(db, "tests"));
-            const testScores = {};
-            testSnapshot.forEach(doc => { testScores[doc.data().teacher] = doc.data().score; });
+            // 2. جلب بيانات المرشحين الإضافية
+            const candDataSnapshot = await getDocs(collection(db, "candidate_data"));
+            const candMap = {};
+            candDataSnapshot.forEach(d => { candMap[d.data().teacher] = d.data(); });
+            
+            // دعم للبيانات القديمة
+            const oldTestsSnapshot = await getDocs(collection(db, "tests"));
+            oldTestsSnapshot.forEach(d => {
+                if(!candMap[d.data().teacher]) {
+                    candMap[d.data().teacher] = { 
+                        writtenScore: d.data().score, writtenMax: 25, age: 0, hasLicense: false 
+                    };
+                }
+            });
 
+            // 3. تجميع البيانات
             let grouped = {};
             evaluations.forEach(ev => {
                 if(!grouped[ev.teacher]) grouped[ev.teacher] = { name: ev.teacher, rawSum: 0, count: 0, details: [] };
                 let sum = ev.answers.reduce((a,b)=>a+b, 0);
                 grouped[ev.teacher].rawSum += sum;
                 grouped[ev.teacher].count++;
-                grouped[ev.teacher].details.push({ evalName: ev.evaluator, answers: ev.answers, sum });
+                grouped[ev.teacher].details.push({ 
+                    id: ev.id,
+                    evalName: ev.evaluator, 
+                    answers: ev.answers, 
+                    sum,
+                    notes: ev.notes || ""
+                });
             });
 
+            // 4. الحسابات النهائية
             let results = Object.values(grouped).map(c => {
+                const cData = candMap[c.name] || { writtenScore: 0, writtenMax: 25, age: 0, hasLicense: false, licenseSpec: 0, licensePed: 0 };
+                
+                // معادلة المقابلة: (مجموع الدرجات / (عدد المقيمين * 35)) * 75
                 let avgPed = (c.rawSum / (c.count * (criteriaList.length * 5))) * 75;
-                let test = testScores[c.name] || 0;
+                
                 return {
                     ...c,
                     avgPed: avgPed.toFixed(1),
-                    test: test,
-                    final: (avgPed + test).toFixed(1)
+                    cData: cData,
+                    final: (avgPed + cData.writtenScore).toFixed(1)
                 };
             });
 
             results.sort((a,b) => b.final - a.final);
+            window.allResults = results;
+            window.isDataLoaded = true;
+
             renderTable(results);
             updateCandidateSelect(results.map(r => r.name));
-            window.allResults = results;
+            
+            // تعبئة البيانات في فورم الأدمن عند تغيير الاختيار
+            document.getElementById('selectCandidate').onchange = (e) => fillAdminForm(e.target.value);
+
         } catch (e) {
             console.error(e);
-            alert("تأكد أن قاعدة البيانات في وضع Test Mode");
+            document.querySelector('tbody').innerHTML = `<tr><td colspan='10' style='color:red'>خطأ: ${e.message}</td></tr>`;
         }
     };
 
     function renderTable(data) {
         const tbody = document.querySelector('tbody');
+        const targetCount = parseInt(document.getElementById('targetCount').value) || 5;
+
         tbody.innerHTML = "";
         data.forEach((r, i) => {
-            let cls = i < 5 ? "qualified" : "";
+            let isQualified = i < targetCount;
+            let rowClass = isQualified ? "qualified" : "waitlist";
+            
+            // حالة المرشح (نص)
+            let statusBadge = isQualified 
+                ? `<span class="badge badge-success">✅ مرشح</span>` 
+                : `<span class="badge badge-warning">⏳ احتياط</span>`;
+
+            // منطق العمر
+            let ageDisplay = r.cData.age ? `<span class="${r.cData.age > 42 ? 'age-red' : 'age-green'}">${r.cData.age}</span>` : "-";
+            
+            // منطق أيقونة الرخصة
+            let licIcon = "❌";
+            if (r.cData.hasLicense) {
+                if(r.cData.licenseSpec > 0 && r.cData.licensePed > 0) licIcon = "🏅"; // كلاهما
+                else if (r.cData.licenseSpec > 0) licIcon = "🧪"; // تخصص فقط
+                else if (r.cData.licensePed > 0) licIcon = "📖"; // تربوي فقط
+            }
+
             tbody.innerHTML += `
-                <tr class="${cls}">
-                    <td>${i+1}</td><td>${r.name}</td><td>${r.count}</td>
-                    <td>${r.avgPed}</td><td>${r.test}</td><td>${r.final}</td>
-                    <td class="no-print"><button onclick="showDetails('${r.name}')">👁️</button></td>
+                <tr class="${rowClass}">
+                    <td>${i+1}</td>
+                    <td style="text-align:right; font-weight:bold;">${r.name} <br> <small style="color:#666">عدد المقيمين: ${r.count}</small></td>
+                    <td>${ageDisplay}</td>
+                    <td class="license-icon" title="تخصص: ${r.cData.licenseSpec} | تربوي: ${r.cData.licensePed}">${licIcon}</td>
+                    <td>${r.avgPed}</td>
+                    <td>${r.cData.writtenScore} <span style="font-size:0.8em; color:#777">/ ${r.cData.writtenMax}</span></td>
+                    <td style="font-size:1.1em; font-weight:bold; color:var(--primary)">${r.final}</td>
+                    <td>${statusBadge}</td>
+                    <td class="no-print"><button onclick="showDetails('${r.name}')" style="cursor:pointer">👁️ عرض</button></td>
                 </tr>`;
         });
     }
 
-    window.saveTestScore = async () => {
-        const teacher = document.getElementById('selectCandidate').value;
-        const score = parseFloat(document.getElementById('writtenScoreInput').value);
-        if(!teacher || isNaN(score)) return;
-
-        const q = query(collection(db, "tests"), where("teacher", "==", teacher));
-        const snap = await getDocs(q);
-        
-        if(!snap.empty) {
-            const docId = snap.docs[0].id;
-            await updateDoc(doc(db, "tests", docId), { score });
-        } else {
-            await addDoc(collection(db, "tests"), { teacher, score });
-        }
-        alert("تم الحفظ");
-        calculateResults();
-    };
+    function fillAdminForm(name) {
+        const r = window.allResults.find(x => x.name === name);
+        if(!r) return;
+        const d = r.cData;
+        document.getElementById('candAge').value = d.age || "";
+        document.getElementById('hasLicense').checked = d.hasLicense || false;
+        document.getElementById('licenseSpec').value = d.licenseSpec || "";
+        document.getElementById('licensePed').value = d.licensePed || "";
+        document.getElementById('writtenScore').value = d.writtenScore || "";
+        document.getElementById('writtenMax').value = d.writtenMax || 25;
+    }
 
     function updateCandidateSelect(names) {
         const sel = document.getElementById('selectCandidate');
-        sel.innerHTML = "<option value=''>اختر المعلم...</option>";
+        const currentVal = sel.value;
+        sel.innerHTML = "<option value=''>-- اختر معلماً لتعديل بياناته --</option>";
         names.forEach(n => sel.innerHTML += `<option value="${n}">${n}</option>`);
+        if(names.includes(currentVal)) sel.value = currentVal;
     }
 
+    // === حذف تقييم محدد ===
+    window.deleteEval = async (id, teacherName) => {
+        if(!confirm("هل أنت متأكد تماماً من حذف هذا التقييم؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+        
+        try {
+            await deleteDoc(doc(db, "evaluations", id));
+            alert("تم حذف التقييم.");
+            document.getElementById('detailsModal').style.display = "none";
+            window.isDataLoaded = false; // لإجبار إعادة التحميل
+            calculateResults(); // تحديث الجدول
+        } catch(e) {
+            alert("فشل الحذف: " + e.message);
+        }
+    }
+
+    // === عرض التفاصيل ===
     window.showDetails = (name) => {
         const r = window.allResults.find(x => x.name === name);
         if(!r) return;
         document.getElementById('detailsModal').style.display = "block";
-        document.getElementById('modalTitle').innerText = "تقرير: " + name;
-        document.getElementById('modalSummary').innerHTML = `التربوي: ${r.avgPed} | التخصص: ${r.test} | <b>النهائي: ${r.final}</b>`;
+        document.getElementById('modalTitle').innerText = "تقرير المعلم: " + name;
+        
+        // تفاصيل الرخصة
+        let licText = r.cData.hasLicense 
+            ? `نعم (تخصص: ${r.cData.licenseSpec}، تربوي: ${r.cData.licensePed})` 
+            : "لا يوجد";
+            
+        // تحديد الحالة في المودال
+        const targetCount = parseInt(document.getElementById('targetCount').value) || 5;
+        const rank = window.allResults.indexOf(r) + 1;
+        const statusText = rank <= targetCount ? "✅ مرشح" : "⏳ احتياط";
+
+        document.getElementById('modalSummary').innerHTML = `
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div><b>الحالة:</b> ${statusText} (الترتيب: ${rank})</div>
+                <div><b>العمر:</b> ${r.cData.age || "-"}</div>
+                <div><b>الرخصة:</b> ${licText}</div>
+                <div><b>درجة المقابلة:</b> ${r.avgPed} / 75</div>
+                <div><b>الاختبار:</b> ${r.cData.writtenScore} / ${r.cData.writtenMax}</div>
+                <div style="grid-column: span 2; border-top:1px solid #ddd; margin-top:5px; padding-top:5px; font-size:1.2em; color:var(--primary)"><b>الدرجة النهائية: ${r.final}</b></div>
+            </div>
+        `;
         
         const div = document.getElementById('evaluatorsBreakdown');
         div.innerHTML = "";
+        
         r.details.forEach(d => {
             let rows = "";
             d.answers.forEach((ans, idx) => {
-                rows += `<tr><td style='text-align:right'>${criteriaList[idx].title}</td><td>${ans}</td></tr>`;
+                rows += `<tr><td style='text-align:right'>${criteriaList[idx].title}</td><td><b>${ans}</b></td></tr>`;
             });
+            
+            let notesHtml = d.notes ? `<div class="note-box">📝 <b>ملاحظات المقيم:</b> ${d.notes}</div>` : "";
+
             div.innerHTML += `
                 <details>
-                    <summary>👤 ${d.evalName} (${d.sum})</summary>
-                    <table style="width:100%">${rows}</table>
+                    <summary>
+                        <span>👤 ${d.evalName} (مجموع: ${d.sum})</span>
+                        <button class="delete-btn no-print" onclick="deleteEval('${d.id}', '${r.name}')">حذف التقييم</button>
+                    </summary>
+                    <div style="padding:10px;">
+                        <table style="width:100%">${rows}</table>
+                        ${notesHtml}
+                    </div>
                 </details>`;
         });
     };
 
+    // ربط الأزرار
     document.getElementById('btnSubmit').onclick = window.submitEvaluation;
-    document.getElementById('btnSaveTest').onclick = window.saveTestScore;
-    document.getElementById('btnShowEval').onclick = () => { document.getElementById('evaluatorPage').classList.remove('hidden'); document.getElementById('adminLoginPage').classList.add('hidden'); document.getElementById('adminDashboard').classList.add('hidden'); };
-    document.getElementById('btnShowAdmin').onclick = () => { document.getElementById('adminLoginPage').classList.remove('hidden'); document.getElementById('evaluatorPage').classList.add('hidden'); };
+    document.getElementById('btnSaveCandidateData').onclick = window.saveCandidateData;
+    
+    // التنقل
+    document.getElementById('btnShowEval').onclick = () => { 
+        document.getElementById('evaluatorPage').classList.remove('hidden'); 
+        document.getElementById('adminLoginPage').classList.add('hidden'); 
+        document.getElementById('adminDashboard').classList.add('hidden'); 
+    };
+    
+    document.getElementById('btnShowAdmin').onclick = () => { 
+        document.getElementById('adminLoginPage').classList.remove('hidden'); 
+        document.getElementById('evaluatorPage').classList.add('hidden'); 
+    };
+
+    // تسجيل الدخول
     document.getElementById('btnLogin').onclick = () => {
         if(document.getElementById('adminPass').value === "admin") {
             document.getElementById('adminLoginPage').classList.add('hidden');
             document.getElementById('adminDashboard').classList.remove('hidden');
+            window.isDataLoaded = false;
             window.calculateResults();
-        } else alert("خطأ");
+        } else alert("كلمة المرور خاطئة");
     };
-    document.getElementById('btnLogout').onclick = document.getElementById('btnShowEval').onclick;
+
+    document.getElementById('btnLogout').onclick = () => location.reload();
     document.getElementById('btnCloseModal').onclick = () => document.getElementById('detailsModal').style.display = "none";
     
+    // تهيئة الصفحة
     renderCriteria();
 </script>
 
