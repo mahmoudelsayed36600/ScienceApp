@@ -5,24 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام تقييم معلمي العلوم - المطور</title>
     <style>
-        :root { --primary: #2980b9; --secondary: #2c3e50; --success: #27ae60; --danger: #c0392b; --warning: #f39c12; --bg: #f4f7f6; }
+        :root { --primary: #2980b9; --secondary: #2c3e50; --success: #27ae60; --danger: #c0392b; --warning: #f39c12; --bg: #f4f7f6; --purple: #8e44ad; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 0; }
         .header { background: var(--secondary); color: white; padding: 15px; text-align: center; }
         .container { max-width: 1000px; margin: 20px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
         /* أزرار التنقل */
-        .nav-buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
-        .nav-btn { padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+        .nav-buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav-btn { padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 16px;}
         .btn-eval { background: var(--primary); }
+        .btn-corrector { background: var(--purple); }
         .btn-admin { background: #e74c3c; }
         
-        /* تحسينات المدخلات للمقيم (تكبير الخط) */
+        /* تحسينات المدخلات */
         .form-group { margin-bottom: 25px; border-bottom: 1px dashed #ddd; padding-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 10px; color: var(--secondary); font-size: 1.1em; }
         .sub-label { font-size: 0.95em; color: #666; display: block; margin-bottom: 12px;}
-        input[type="text"], input[type="number"], select, textarea { 
+        input[type="text"], input[type="number"], input[type="password"], select, textarea { 
             width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 6px; 
-            box-sizing: border-box; font-size: 18px; /* تكبير الخط */
+            box-sizing: border-box; font-size: 18px; margin-bottom: 10px;
         }
         textarea { resize: vertical; height: 100px; font-family: inherit; }
 
@@ -36,8 +37,8 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95em; }
         th, td { border: 1px solid #ddd; padding: 12px 8px; text-align: center; }
         th { background: var(--secondary); color: white; }
-        .qualified { background-color: #d4edda; font-weight: bold; } /* للمرشحين */
-        .waitlist { background-color: #fff3cd; } /* للاحتياط */
+        .qualified { background-color: #d4edda; font-weight: bold; } 
+        .waitlist { background-color: #fff3cd; } 
         
         /* تنسيقات خاصة للعمر والرخصة */
         .age-red { color: var(--danger); font-weight: bold; }
@@ -48,25 +49,42 @@
         .badge { padding: 5px 10px; border-radius: 15px; color: white; font-size: 0.85em; display: inline-block; min-width: 60px;}
         .badge-success { background-color: var(--success); }
         .badge-warning { background-color: var(--warning); color: #fff; }
+        .badge-info { background-color: var(--primary); }
 
         /* أدوات التحكم والأزرار */
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         .action-btn { width: 100%; padding: 15px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; margin-top: 15px; font-size: 18px; }
         .submit-btn { background: var(--success); }
         .login-btn { background: var(--secondary); }
         .delete-btn { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 10px;}
 
-        /* لوحة التحكم بالإدارة */
-        .admin-panel { background: #e8f4f8; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #b3d7e8; }
-        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end; }
-        .small-input { font-size: 14px !important; padding: 8px !important; }
+        /* لوحة الإدارة و المصحح */
+        .data-panel { background: #e8f4f8; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #b3d7e8; }
+        .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end; }
+        .small-input { font-size: 14px !important; padding: 10px !important; margin-bottom: 0 !important; }
         .checkbox-wrapper { display: flex; align-items: center; gap: 10px; background: white; padding: 10px; border-radius: 4px; border: 1px solid #ddd; height: 42px; box-sizing: border-box;}
         .checkbox-wrapper input { width: auto; margin: 0; }
         .checkbox-wrapper label { margin: 0; font-size: 14px; cursor: pointer; }
+        .radio-group { display: flex; gap: 15px; background: white; padding: 10px; border: 1px solid #ddd; border-radius: 4px; height: 42px; align-items: center; box-sizing: border-box;}
+        .radio-group label { margin: 0; font-size: 14px; display: flex; align-items: center; gap: 5px; font-weight: normal;}
 
-        /* مدخل عدد المرشحين */
-        .target-box { background: white; padding: 10px 20px; border-radius: 30px; border: 2px solid var(--primary); display: flex; align-items: center; gap: 10px; margin-left: 15px; }
-        .target-box input { width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; font-size: 16px; border-radius: 5px; }
+        /* شريط فلاتر الإدارة */
+        .admin-filters { display: flex; flex-wrap: wrap; gap: 15px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; align-items: center; }
+        .filter-item { display: flex; align-items: center; gap: 10px; }
+        .filter-item input, .filter-item select { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; margin-bottom:0;}
+        
+        /* بيانات المعلم التلقائية (للمقيم) */
+        .auto-data-box { background: #eaf2f8; border-right: 4px solid var(--primary); padding: 15px; margin-top: 10px; border-radius: 4px; font-size: 0.95em; line-height: 1.6;}
+
+        /* تبويبات الإدارة */
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; flex-wrap: wrap; }
+        .admin-tab-btn { background: #f0f0f0; border: none; padding: 10px 20px; font-size: 15px; cursor: pointer; font-weight: bold; color: var(--secondary); border-radius: 5px; transition: 0.3s; }
+        .admin-tab-btn:hover { background: #e0e0e0; }
+        .admin-tab-btn.active { background: var(--secondary); color: white; }
+        .admin-tab-content { display: none; animation: fadeIn 0.3s; }
+        .admin-tab-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* Modal Styles */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); overflow-y: auto; }
@@ -79,17 +97,13 @@
         @media print { 
             .no-print { display: none !important; } 
             .container { box-shadow: none; width: 100%; max-width: 100%; margin: 0; }
-            
-            /* تحسين طباعة المودال (التقرير المفصل) */
             .modal { position: static; height: auto; overflow: visible; background: white; }
             .modal-content { border: none; width: 100%; margin: 0; padding: 0; max-width: 100%; }
-            /* إجبار التفاصيل على الظهور عند الطباعة */
             details { break-inside: avoid; display: block !important; }
             details[open] summary ~ * { display: block; }
-            
-            /* إخفاء المحتوى الخلفي إذا كان المودال مفتوحاً */
             body.modal-open > *:not(#detailsModal) { display: none; }
             body.modal-open #detailsModal { display: block; }
+            .admin-tab-content { display: block !important; } /* إظهار كل المحتوى عند الطباعة إن لزم الأمر */
         }
     </style>
 </head>
@@ -97,20 +111,42 @@
 
 <div class="header no-print"><h2>لجنة توظيف معلمي العلوم (Online)</h2></div>
 
-<div class="nav-buttons no-print" style="margin-top: 20px;">
-    <button class="nav-btn btn-eval" id="btnShowEval">👨‍🏫 دخول المقيم</button>
-    <button class="nav-btn btn-admin" id="btnShowAdmin">🔒 دخول الإدارة</button>
+<!-- ========================================== -->
+<!-- 0. الواجهة الرئيسية (اختيار البوابة) -->
+<!-- ========================================== -->
+<div id="mainEntrance" class="container no-print" style="text-align: center; padding: 40px 20px; margin-top: 50px;">
+    <h2 style="color: var(--secondary); margin-bottom: 30px;">بوابات الدخول لنظام التقييم</h2>
+    <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
+        <button class="nav-btn btn-eval" style="width: 100%; max-width: 300px; padding: 15px; font-size: 18px;" onclick="window.showPage('evalLoginPage')">👨‍🏫 بوابة المقيمين</button>
+        <button class="nav-btn btn-corrector" style="width: 100%; max-width: 300px; padding: 15px; font-size: 18px;" onclick="window.showPage('corrLoginPage')">✍️ بوابة المصححين</button>
+        <button class="nav-btn btn-admin" style="width: 100%; max-width: 300px; padding: 15px; font-size: 18px;" onclick="window.showPage('adminLoginPage')">🔒 بوابة الإدارة</button>
+    </div>
 </div>
 
-<div id="evaluatorPage" class="container">
-    <h3 style="color: var(--primary); text-align: center;">نموذج تقييم الأداء (العلوم)</h3>
-    <div class="form-group">
-        <label>اسم المعلم المرشح:</label>
-        <input type="text" id="candName" placeholder="اكتب الاسم ثلاثي...">
+<!-- ========================================== -->
+<!-- 1. واجهة المقيم -->
+<!-- ========================================== -->
+<div id="evaluatorPage" class="container hidden">
+    <div class="no-print" style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="color: var(--primary); margin: 0;">نموذج تقييم الأداء</h3>
+        <button class="nav-btn" style="background: #e74c3c; padding: 5px 15px; font-size: 14px;" onclick="location.reload()">تسجيل خروج</button>
     </div>
+    
     <div class="form-group">
         <label>اسم المقيم (عضو اللجنة):</label>
-        <input type="text" id="evalName" placeholder="اكتب اسمك...">
+        <select id="evalName">
+            <option value="">-- جاري تحميل أسماء المقيمين --</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>اختر المعلم المرشح:</label>
+        <select id="evalCandName" onchange="window.showTeacherInfoForEvaluator()">
+            <option value="">-- جاري تحميل قائمة المعلمين --</option>
+        </select>
+        <div id="evalCandInfo" class="auto-data-box hidden">
+            <!-- ستظهر بيانات المعلم التلقائية هنا -->
+        </div>
     </div>
     
     <div id="criteriaContainer">Loading...</div>
@@ -123,101 +159,260 @@
     <button class="action-btn submit-btn" id="btnSubmit">إرسال التقييم</button>
 </div>
 
+<!-- ========================================== -->
+<!-- 2. واجهة المصحح -->
+<!-- ========================================== -->
+<div id="correctorPage" class="container hidden">
+    <div class="no-print" style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="color: var(--purple); margin: 0;">✍️ لوحة المصحح (إدخال البيانات الأساسية)</h3>
+        <button class="nav-btn" style="background: #e74c3c; padding: 5px 15px; font-size: 14px;" onclick="location.reload()">تسجيل خروج</button>
+    </div>
+    <div class="data-panel">
+        <div class="data-grid">
+            <div style="grid-column: span 2;">
+                <label class="small-input">اسم المعلم:</label>
+                <input type="text" id="corrCandName" list="teacherNamesList" class="small-input" placeholder="اكتب اسماً جديداً أو اختر من القائمة" onchange="window.fillCorrectorForm(this.value)">
+                <datalist id="teacherNamesList"></datalist>
+            </div>
+            
+            <div style="grid-column: span 2;">
+                <label class="small-input">التخصص:</label>
+                <select id="corrSpecialization" class="small-input">
+                    <option value="العلوم أولية">العلوم أولية</option>
+                    <option value="العلوم عليا ومتوسطة">العلوم عليا ومتوسطة</option>
+                    <option value="الكيمياء">الكيمياء</option>
+                    <option value="الأحياء">الأحياء</option>
+                    <option value="الفيزياء">الفيزياء</option>
+                    <option value="Science">Science</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="small-input">الخبرة التعليمية (سنوات):</label>
+                <input type="number" id="corrExperience" class="small-input" placeholder="عدد السنوات" min="0">
+            </div>
+
+            <div>
+                <label class="small-input">مكان الخبرة:</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="corrExpLocation" value="inside" checked> داخل المملكة</label>
+                    <label><input type="radio" name="corrExpLocation" value="outside"> خارج المملكة</label>
+                </div>
+            </div>
+
+            <div>
+                <label class="small-input">العمر:</label>
+                <input type="number" id="corrAge" class="small-input" placeholder="مثال: 35">
+            </div>
+
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="corrHasLicense">
+                <label for="corrHasLicense">يوجد رخصة مهنية؟</label>
+            </div>
+
+            <div>
+                <label class="small-input">درجة التخصص (الرخصة):</label>
+                <input type="number" id="corrLicenseSpec" class="small-input" placeholder="الدرجة">
+            </div>
+            
+            <div>
+                <label class="small-input">درجة التربوي (الرخصة):</label>
+                <input type="number" id="corrLicensePed" class="small-input" placeholder="الدرجة">
+            </div>
+
+            <div>
+                <label class="small-input">الاختبار التحريري (الدرجة الحاصل عليها):</label>
+                <input type="number" id="corrWrittenScore" class="small-input" placeholder="الدرجة">
+            </div>
+
+            <div>
+                <label class="small-input">الدرجة العظمى للاختبار:</label>
+                <input type="number" id="corrWrittenMax" class="small-input" value="25">
+            </div>
+
+            <div style="grid-column: 1 / -1; margin-top: 10px;">
+                <button class="action-btn submit-btn" onclick="window.saveData('corrector')">💾 حفظ بيانات المعلم</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 3. تسجيل دخول الإدارة -->
+<!-- ========================================== -->
+<div id="evalLoginPage" class="container hidden" style="max-width: 400px; text-align: center;">
+    <h3>👨‍🏫 منطقة المقيم</h3>
+    <input type="password" id="evalPass" placeholder="كلمة المرور">
+    <button class="action-btn login-btn" id="btnLoginEval">دخول</button>
+    <button class="action-btn" style="background: #95a5a6; margin-top: 10px;" onclick="window.showPage('mainEntrance')">رجوع</button>
+</div>
+
+<div id="corrLoginPage" class="container hidden" style="max-width: 400px; text-align: center;">
+    <h3>✍️ منطقة المصحح</h3>
+    <input type="password" id="corrPass" placeholder="كلمة المرور">
+    <button class="action-btn login-btn" id="btnLoginCorr">دخول</button>
+    <button class="action-btn" style="background: #95a5a6; margin-top: 10px;" onclick="window.showPage('mainEntrance')">رجوع</button>
+</div>
+
 <div id="adminLoginPage" class="container hidden" style="max-width: 400px; text-align: center;">
     <h3>🔒 منطقة الإدارة</h3>
     <input type="password" id="adminPass" placeholder="كلمة المرور">
     <button class="action-btn login-btn" id="btnLogin">دخول</button>
+    <button class="action-btn" style="background: #95a5a6; margin-top: 10px;" onclick="window.showPage('mainEntrance')">رجوع</button>
 </div>
 
+<!-- ========================================== -->
+<!-- 4. لوحة الإدارة -->
+<!-- ========================================== -->
 <div id="adminDashboard" class="container hidden">
+    
     <div class="no-print" style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-        <h3 style="margin:0;">📊 لوحة النتائج والتحكم</h3>
+        <h3 style="margin:0; color: var(--secondary)">لوحة التحكم والنتائج</h3>
+        <div>
+            <button class="nav-btn" style="background:var(--danger); padding:8px 15px; font-size:14px; margin-left: 5px;" onclick="window.deleteAllData()">🗑️ تصفير النظام</button>
+            <button class="nav-btn btn-admin" onclick="window.print()" style="padding:8px 15px; font-size:14px; margin-left: 5px;">🖨️ طباعة</button>
+            <button id="btnLogout" style="padding:8px 15px; cursor: pointer; border: 1px solid #ddd; background: white; border-radius: 20px;">خروج</button>
+        </div>
+    </div>
+
+    <!-- تبويبات الإدارة -->
+    <div class="admin-tabs no-print">
+        <button class="admin-tab-btn active" onclick="window.switchAdminTab(event, 'tab-results')">📊 النتائج والفلترة</button>
+        <button class="admin-tab-btn" onclick="window.switchAdminTab(event, 'tab-edit-candidates')">📝 تعديل المرشحين</button>
+        <button class="admin-tab-btn" onclick="window.switchAdminTab(event, 'tab-evaluators')">👥 إدخال المقيمين</button>
+    </div>
+
+    <!-- التبويب 1: النتائج -->
+    <div id="tab-results" class="admin-tab-content active">
+        <!-- شريط الفلاتر والبحث -->
+        <div class="admin-filters no-print">
+            <div class="filter-item">
+                <label>التخصص:</label>
+                <select id="filterSpec" onchange="window.applyAdminFilters()">
+                    <option value="الجميع">الجميع</option>
+                    <option value="العلوم أولية">العلوم أولية</option>
+                    <option value="العلوم عليا ومتوسطة">العلوم عليا ومتوسطة</option>
+                    <option value="الكيمياء">الكيمياء</option>
+                    <option value="الأحياء">الأحياء</option>
+                    <option value="الفيزياء">الفيزياء</option>
+                    <option value="Science">Science</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>بحث بالاسم:</label>
+                <input type="text" id="searchName" placeholder="اكتب اسم المعلم..." onkeyup="window.applyAdminFilters()">
+            </div>
+            <div class="filter-item" style="margin-right: auto; background: var(--bg); padding: 5px 10px; border-radius: 8px; border: 1px solid #ccc;">
+                <label style="color:var(--primary)">عدد الشواغر:</label>
+                <input type="number" id="targetCount" value="5" min="1" style="width: 60px; padding: 5px;" onchange="window.applyAdminFilters()">
+            </div>
+        </div>
         
-        <div style="display: flex; align-items: center;">
-             <div class="target-box">
-                <label for="targetCount">عدد الشواغر:</label>
-                <input type="number" id="targetCount" value="5" min="1" onchange="window.calculateResults()">
-            </div>
-
-            <div style="margin-right: 15px;">
-                <button class="nav-btn btn-admin" onclick="window.print()" style="padding:8px 15px; font-size:14px">طباعة الجدول</button>
-                <button id="btnLogout" style="padding:8px 15px; cursor: pointer; border: 1px solid #ddd; background: white; border-radius: 20px;">خروج</button>
-            </div>
+        <div style="overflow-x: auto;">
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th rowspan="2">#</th>
+                        <th rowspan="2">المعلم</th>
+                        <th rowspan="2">التخصص</th>
+                        <th rowspan="2">العمر</th>
+                        <th rowspan="2">الخبرة</th>
+                        <th rowspan="2">الرخصة</th>
+                        <th colspan="3">التقييمات</th>
+                        <th rowspan="2">الحالة</th>
+                        <th rowspan="2" class="no-print">إجراءات</th>
+                    </tr>
+                    <tr>
+                        <th>المقابلة (75)</th>
+                        <th>التحريري</th>
+                        <th>النهائي</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
-    </div>
-    
-    <div class="admin-panel no-print">
-        <h4 style="margin-top:0; color:var(--secondary);">📝 إدارة بيانات المرشح</h4>
-        <div class="admin-grid">
-            <div style="grid-column: span 2;">
-                <label style="font-size:14px;">اختر المعلم:</label>
-                <select id="selectCandidate" class="small-input"><option>جاري التحميل...</option></select>
-            </div>
-            
-            <div>
-                <label style="font-size:14px;">العمر:</label>
-                <input type="number" id="candAge" class="small-input" placeholder="مثال: 35">
-            </div>
-
-            <div class="checkbox-wrapper">
-                <input type="checkbox" id="hasLicense">
-                <label for="hasLicense">يوجد رخصة؟</label>
-            </div>
-
-            <div>
-                <label style="font-size:14px;">درجة التخصص (الرخصة):</label>
-                <input type="number" id="licenseSpec" class="small-input" placeholder="مثال: 80">
-            </div>
-            
-            <div>
-                <label style="font-size:14px;">درجة التربوي (الرخصة):</label>
-                <input type="number" id="licensePed" class="small-input" placeholder="مثال: 75">
-            </div>
-
-            <div>
-                <label style="font-size:14px;">درجة الاختبار التحريري:</label>
-                <input type="number" id="writtenScore" class="small-input" placeholder="الدرجة">
-            </div>
-
-            <div>
-                <label style="font-size:14px;">الدرجة العظمى للاختبار:</label>
-                <input type="number" id="writtenMax" class="small-input" value="25" placeholder="من كم؟">
-            </div>
-
-            <button id="btnSaveCandidateData" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:4px; cursor:pointer; height:42px;">حفظ البيانات</button>
+        
+        <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
+            <span style="margin-left: 15px;">🏅: رخصة كاملة (تخصص+تربوي)</span>
+            <span style="margin-left: 15px;">🧪: تخصص فقط</span>
+            <span style="margin-left: 15px;">📖: تربوي فقط</span>
+            <span>❌: لا يوجد رخصة</span>
         </div>
     </div>
 
-    <div style="overflow-x: auto;">
-        <table id="resultsTable">
-            <thead>
-                <tr>
-                    <th rowspan="2">#</th>
-                    <th rowspan="2">المعلم</th>
-                    <th rowspan="2">العمر</th>
-                    <th rowspan="2">الرخصة</th>
-                    <th colspan="3">التقييمات</th>
-                    <th rowspan="2">الحالة</th>
-                    <th rowspan="2" class="no-print">تفاصيل</th>
-                </tr>
-                <tr>
-                    <th>المقابلة (75)</th>
-                    <th>الاختبار</th>
-                    <th>النهائي</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <!-- التبويب 2: تعديل المرشحين -->
+    <div id="tab-edit-candidates" class="admin-tab-content no-print">
+        <div class="data-panel">
+            <h4 style="margin-top:0; color:var(--secondary);">📝 التعديل السريع لبيانات مرشح</h4>
+            <div class="data-grid">
+                <div style="grid-column: span 2;">
+                    <label class="small-input">اختر المعلم:</label>
+                    <select id="adminSelectCandidate" class="small-input" onchange="window.fillAdminForm(this.value)"><option>جاري التحميل...</option></select>
+                </div>
+                
+                <div>
+                    <label class="small-input">التخصص:</label>
+                    <select id="adminSpecialization" class="small-input">
+                        <option value="العلوم أولية">العلوم أولية</option>
+                        <option value="العلوم عليا ومتوسطة">العلوم عليا ومتوسطة</option>
+                        <option value="الكيمياء">الكيمياء</option>
+                        <option value="الأحياء">الأحياء</option>
+                        <option value="الفيزياء">الفيزياء</option>
+                        <option value="Science">Science</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="small-input">العمر:</label>
+                    <input type="number" id="adminAge" class="small-input">
+                </div>
+
+                <div>
+                    <label class="small-input">الخبرة (سنوات):</label>
+                    <input type="number" id="adminExperience" class="small-input">
+                </div>
+
+                <div>
+                    <label class="small-input">مكان الخبرة:</label>
+                    <select id="adminExpLocation" class="small-input">
+                        <option value="inside">داخل المملكة</option>
+                        <option value="outside">خارج المملكة</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="adminHasLicense">
+                    <label for="adminHasLicense">يوجد رخصة؟</label>
+                </div>
+
+                <div><label class="small-input">درجة التخصص:</label><input type="number" id="adminLicenseSpec" class="small-input"></div>
+                <div><label class="small-input">درجة التربوي:</label><input type="number" id="adminLicensePed" class="small-input"></div>
+                <div><label class="small-input">التحريري:</label><input type="number" id="adminWrittenScore" class="small-input"></div>
+                
+                <button class="action-btn" style="background:var(--secondary); margin-top: 27px; height: 42px; padding: 0;" onclick="window.saveData('admin')">حفظ التعديل</button>
+            </div>
+        </div>
     </div>
-    
-    <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
-        <span style="margin-left: 15px;">🏅: رخصة كاملة (تخصص+تربوي)</span>
-        <span style="margin-left: 15px;">🧪: تخصص فقط</span>
-        <span style="margin-left: 15px;">📖: تربوي فقط</span>
-        <span>❌: لا يوجد رخصة</span>
+
+    <!-- التبويب 3: إدارة المقيمين -->
+    <div id="tab-evaluators" class="admin-tab-content no-print">
+        <div class="data-panel">
+            <h4 style="margin-top:0; color:var(--secondary);">👥 إدخال المقيمين</h4>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                <input type="text" id="newEvaluatorName" class="small-input" placeholder="اسم المقيم الجديد..." style="flex:1;">
+                <button class="action-btn" style="background:var(--success); margin: 0; width: auto; padding: 10px 20px; height: 42px;" onclick="window.addEvaluator()">إضافة مقيم</button>
+            </div>
+            <ul id="adminEvaluatorsList" style="list-style:none; padding:0; margin:0; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 4px;">
+                <li style="padding: 10px; border-bottom: 1px solid #eee;">جاري التحميل...</li>
+            </ul>
+        </div>
     </div>
+
 </div>
 
+<!-- ========================================== -->
+<!-- المودال (التقرير المفصل) -->
+<!-- ========================================== -->
 <div id="detailsModal" class="modal">
     <div class="modal-content">
         <span class="close-modal no-print" id="btnCloseModal">&times;</span>
@@ -235,11 +430,13 @@
     // ==========================================================
     // تهيئة Firebase
     // ==========================================================
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    const firebaseConfig = {
-        apiKey:"AIzaSyB2jsilWQtu4DUaaPsdVQ2lw6Q9_-bpwEI",
+    // Your web app's custom Firebase configuration
+    const customFirebaseConfig = {
+        apiKey: "AIzaSyB2jsilWQtu4DUaaPsdVQ2lw6Q9_-bpwEI",
         authDomain: "science-eval-app.firebaseapp.com",
         projectId: "science-eval-app",
         storageBucket: "science-eval-app.firebasestorage.app",
@@ -247,10 +444,23 @@
         appId: "1:789546485824:web:8e9c6d0895c82afe7db7a5"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // Use Canvas internal config if available, otherwise fallback to the custom config
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : customFirebaseConfig;
 
-    // === البيانات والثوابت (بنود التقييم الجديدة) ===
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    
+    let currentUser = null;
+
+    const getCol = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
+    const getDRef = (name, id) => doc(db, 'artifacts', appId, 'public', 'data', name, id);
+
+    // بنود التقييم
     const criteriaList = [
         { title: "1. المهارات التربوية", sub: "تشمل التخطيط، إدارة الصف، تقييم الطلاب، الفروق الفردية" },
         { title: "2. المعرفة العلمية", sub: "وتشمل التمكن من المحتوى العلمي وصحته" },
@@ -261,7 +471,126 @@
         { title: "7. السمات الشخصية", sub: "الثقة، المظهر، القدوة، الاتزان" }
     ];
 
-    // === دوال واجهة المستخدم ===
+    // متغيرات عامة لحفظ البيانات
+    window.candidatesDataMap = {}; 
+    window.allCalculatedResults = []; 
+    window.evaluatorsList = []; 
+
+    // === التنقل بين تبويبات الإدارة ===
+    window.switchAdminTab = (event, tabId) => {
+        document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.admin-tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    };
+
+    // === دوال التهيئة وجلب البيانات ===
+    async function loadCandidatesData() {
+        if (!currentUser) return;
+        try {
+            const snap = await getDocs(getCol("candidate_data"));
+            window.candidatesDataMap = {};
+            snap.forEach(d => {
+                window.candidatesDataMap[d.data().teacher] = { id: d.id, ...d.data() };
+            });
+            updateDropdowns();
+        } catch(e) {
+            console.error("خطأ في جلب بيانات المعلمين:", e);
+        }
+    }
+
+    function updateDropdowns() {
+        const names = Object.keys(window.candidatesDataMap).sort();
+        
+        // 1. تحديث قائمة المقيم
+        const evalSelect = document.getElementById('evalCandName');
+        const currentEval = evalSelect.value;
+        evalSelect.innerHTML = "<option value=''>-- اختر المعلم المرشح --</option>";
+        names.forEach(n => evalSelect.innerHTML += `<option value="${n}">${n}</option>`);
+        if(names.includes(currentEval)) evalSelect.value = currentEval;
+
+        // 2. تحديث قائمة الإدارة
+        const adminSelect = document.getElementById('adminSelectCandidate');
+        const currentAdmin = adminSelect.value;
+        adminSelect.innerHTML = "<option value=''>-- اختر معلماً لتعديل بياناته --</option>";
+        names.forEach(n => adminSelect.innerHTML += `<option value="${n}">${n}</option>`);
+        if(names.includes(currentAdmin)) adminSelect.value = currentAdmin;
+
+        // 3. تحديث قائمة المصحح (Datalist)
+        const datalist = document.getElementById('teacherNamesList');
+        datalist.innerHTML = "";
+        names.forEach(n => datalist.innerHTML += `<option value="${n}">`);
+    }
+
+    async function loadEvaluators() {
+        if (!currentUser) return;
+        try {
+            const snap = await getDocs(getCol("evaluators_list"));
+            window.evaluatorsList = [];
+            snap.forEach(d => {
+                window.evaluatorsList.push({ id: d.id, name: d.data().name });
+            });
+            updateEvaluatorsUI();
+        } catch(e) {
+            console.error("خطأ في جلب بيانات المقيمين:", e);
+        }
+    }
+
+    function updateEvaluatorsUI() {
+        // تحديث قائمة المقيمين المنسدلة في صفحة التقييم
+        const evalSelect = document.getElementById('evalName');
+        const currentEval = evalSelect.value;
+        evalSelect.innerHTML = "<option value=''>-- اختر اسمك --</option>";
+        window.evaluatorsList.forEach(ev => evalSelect.innerHTML += `<option value="${ev.name}">${ev.name}</option>`);
+        if(window.evaluatorsList.find(e => e.name === currentEval)) evalSelect.value = currentEval;
+
+        // تحديث قائمة الإدارة الخاصة بالمقيمين
+        const adminList = document.getElementById('adminEvaluatorsList');
+        if (adminList) {
+            adminList.innerHTML = "";
+            if (window.evaluatorsList.length === 0) {
+                adminList.innerHTML = "<li style='padding: 10px;'>لا يوجد مقيمين حالياً. الرجاء الإضافة.</li>";
+            } else {
+                window.evaluatorsList.forEach(ev => {
+                    adminList.innerHTML += `<li style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                        <span>${ev.name}</span>
+                        <button class="delete-btn no-print" style="margin:0;" onclick="window.removeEvaluator('${ev.id}')">حذف</button>
+                    </li>`;
+                });
+            }
+        }
+    }
+
+    // === إدارة المقيمين (الإدارة) ===
+    window.addEvaluator = async () => {
+        const nameInput = document.getElementById('newEvaluatorName');
+        const name = nameInput.value.trim();
+        if(!name) { alert("الرجاء إدخال اسم المقيم"); return; }
+        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد."); return; }
+
+        try {
+            const btn = document.querySelector('button[onclick="window.addEvaluator()"]');
+            btn.disabled = true; btn.innerText = "...";
+            await addDoc(getCol("evaluators_list"), { name: name, timestamp: new Date().toISOString() });
+            nameInput.value = "";
+            await loadEvaluators();
+            btn.disabled = false; btn.innerText = "إضافة مقيم";
+        } catch (e) {
+            alert("خطأ أثناء إضافة المقيم: " + e.message);
+        }
+    };
+
+    window.removeEvaluator = async (id) => {
+        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد."); return; }
+        if(!confirm("هل أنت متأكد من حذف هذا المقيم؟")) return;
+        try {
+            await deleteDoc(getDRef("evaluators_list", id));
+            await loadEvaluators();
+        } catch (e) {
+            alert("خطأ في الحذف: " + e.message);
+        }
+    };
+
     function renderCriteria() {
         const container = document.getElementById('criteriaContainer');
         container.innerHTML = "";
@@ -272,13 +601,112 @@
         });
     }
 
-    // === إرسال التقييم ===
+    // === تفاعل الواجهات التلقائي ===
+    window.showTeacherInfoForEvaluator = () => {
+        const name = document.getElementById('evalCandName').value;
+        const infoBox = document.getElementById('evalCandInfo');
+        if(name && window.candidatesDataMap[name]) {
+            const data = window.candidatesDataMap[name];
+            let expLoc = data.expInsideKSA ? 'داخل المملكة' : 'خارج المملكة';
+            infoBox.innerHTML = `
+                <b>التخصص:</b> <span class="badge badge-info">${data.specialization || 'غير محدد'}</span> <br>
+                <b>الخبرة التعليمية:</b> ${data.experienceYears || 0} سنوات (${expLoc}) <br>
+                <b>العمر:</b> ${data.age || '-'} سنة
+            `;
+            infoBox.classList.remove('hidden');
+        } else {
+            infoBox.classList.add('hidden');
+            infoBox.innerHTML = '';
+        }
+    }
+
+    window.fillCorrectorForm = (name) => {
+        if(!name || !window.candidatesDataMap[name]) return;
+        const d = window.candidatesDataMap[name];
+        document.getElementById('corrSpecialization').value = d.specialization || "العلوم أولية";
+        document.getElementById('corrAge').value = d.age || "";
+        document.getElementById('corrExperience').value = d.experienceYears || 0;
+        document.querySelector(`input[name="corrExpLocation"][value="${d.expInsideKSA ? 'inside' : 'outside'}"]`).checked = true;
+        document.getElementById('corrHasLicense').checked = d.hasLicense || false;
+        document.getElementById('corrLicenseSpec').value = d.licenseSpec || "";
+        document.getElementById('corrLicensePed').value = d.licensePed || "";
+        document.getElementById('corrWrittenScore').value = d.writtenScore || "";
+        document.getElementById('corrWrittenMax').value = d.writtenMax || 25;
+    }
+
+    window.fillAdminForm = (name) => {
+        if(!name || !window.candidatesDataMap[name]) return;
+        const d = window.candidatesDataMap[name];
+        document.getElementById('adminSpecialization').value = d.specialization || "العلوم أولية";
+        document.getElementById('adminAge').value = d.age || "";
+        document.getElementById('adminExperience').value = d.experienceYears || 0;
+        document.getElementById('adminExpLocation').value = d.expInsideKSA ? 'inside' : 'outside';
+        document.getElementById('adminHasLicense').checked = d.hasLicense || false;
+        document.getElementById('adminLicenseSpec').value = d.licenseSpec || "";
+        document.getElementById('adminLicensePed').value = d.licensePed || "";
+        document.getElementById('adminWrittenScore').value = d.writtenScore || "";
+    }
+
+    // === حفظ البيانات (مشترك بين المصحح والإدارة) ===
+    window.saveData = async (source) => {
+        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
+        let prefix = source === 'corrector' ? 'corr' : 'admin';
+        
+        let teacher = source === 'corrector' ? document.getElementById('corrCandName').value.trim() : document.getElementById('adminSelectCandidate').value;
+        if(!teacher) { alert("الرجاء إدخال/اختيار اسم المعلم أولاً"); return; }
+
+        const dataObj = {
+            teacher: teacher,
+            specialization: document.getElementById(`${prefix}Specialization`).value,
+            age: parseInt(document.getElementById(`${prefix}Age`).value) || 0,
+            experienceYears: parseInt(document.getElementById(`${prefix}Experience`).value) || 0,
+            hasLicense: document.getElementById(`${prefix}HasLicense`).checked,
+            licenseSpec: parseFloat(document.getElementById(`${prefix}LicenseSpec`).value) || 0,
+            licensePed: parseFloat(document.getElementById(`${prefix}LicensePed`).value) || 0,
+            writtenScore: parseFloat(document.getElementById(`${prefix}WrittenScore`).value) || 0,
+            writtenMax: source === 'corrector' ? (parseFloat(document.getElementById('corrWrittenMax').value) || 25) : (window.candidatesDataMap[teacher]?.writtenMax || 25)
+        };
+
+        if(source === 'corrector') {
+            dataObj.expInsideKSA = document.querySelector('input[name="corrExpLocation"]:checked').value === 'inside';
+        } else {
+            dataObj.expInsideKSA = document.getElementById('adminExpLocation').value === 'inside';
+        }
+
+        try {
+            const btn = source === 'corrector' ? document.querySelector('#correctorPage .submit-btn') : document.querySelector('#tab-edit-candidates .action-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "جاري الحفظ..."; btn.disabled = true;
+
+            const existingData = window.candidatesDataMap[teacher];
+            
+            if(existingData && existingData.id) {
+                await updateDoc(getDRef("candidate_data", existingData.id), dataObj);
+            } else {
+                const docRef = await addDoc(getCol("candidate_data"), dataObj);
+                dataObj.id = docRef.id; // للاستخدام المباشر دون إعادة تحميل كاملة
+            }
+            
+            alert("✅ تم حفظ بيانات المعلم بنجاح");
+            btn.innerText = originalText; btn.disabled = false;
+            
+            // تحديث البيانات محلياً
+            await loadCandidatesData(); 
+            if(source === 'admin') window.fetchAndCalculateAll(); // تحديث الجدول فوراً إذا كنا في الإدارة
+
+        } catch(e) {
+            alert("خطأ أثناء الحفظ: " + e.message);
+        }
+    };
+
+    // === إرسال التقييم (المقيم) ===
     window.submitEvaluation = async () => {
-        const teacher = document.getElementById('candName').value.trim();
+        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
+        const teacher = document.getElementById('evalCandName').value;
         const evaluator = document.getElementById('evalName').value.trim();
         const notes = document.getElementById('evalNotes').value.trim();
         
-        if(!teacher || !evaluator) { alert("الرجاء إدخال اسم المعلم واسم المقيم"); return; }
+        if(!teacher || !evaluator) { alert("الرجاء اختيار المعلم وإدخال اسمك كمقيم"); return; }
 
         let answers = [];
         let allAnswered = true;
@@ -291,134 +719,98 @@
 
         try {
             const btn = document.getElementById('btnSubmit');
-            btn.innerText = "جاري الحفظ..."; btn.disabled = true;
+            btn.innerText = "جاري الإرسال..."; btn.disabled = true;
             
-            await addDoc(collection(db, "evaluations"), {
+            await addDoc(getCol("evaluations"), {
                 teacher, evaluator, answers, notes, timestamp: new Date().toISOString()
             });
             
-            alert("✅ تم حفظ التقييم بنجاح!");
-            location.reload();
+            alert("✅ تم إرسال التقييم بنجاح!");
+            
+            // تفريغ النموذج بعد الإرسال بدون إعادة تحميل الصفحة (لمنع الخروج)
+            document.getElementById('evalNotes').value = "";
+            document.getElementById('evalCandName').value = ""; // إعادة تعيين اختيار المعلم
+            window.showTeacherInfoForEvaluator(); // إخفاء صندوق بيانات المعلم
+            
+            // إلغاء تحديد جميع الدوائر (الراديو)
+            criteriaList.forEach((_, i) => {
+                const radios = document.querySelectorAll(`input[name="q_${i}"]`);
+                radios.forEach(r => r.checked = false);
+            });
+
+            // إعادة زر الإرسال لوضعه الطبيعي
+            btn.innerText = "إرسال التقييم";
+            btn.disabled = false;
+
         } catch (e) {
-            console.error(e);
-            alert("حدث خطأ أثناء الحفظ: " + e.message);
+            alert("حدث خطأ: " + e.message);
             document.getElementById('btnSubmit').innerText = "إرسال التقييم";
             document.getElementById('btnSubmit').disabled = false;
         }
     };
 
-    // === حفظ بيانات المرشح (الأدمن) ===
-    window.saveCandidateData = async () => {
-        const teacher = document.getElementById('selectCandidate').value;
-        if(!teacher) { alert("اختر معلماً أولاً"); return; }
-
-        const age = parseInt(document.getElementById('candAge').value) || 0;
-        const hasLicense = document.getElementById('hasLicense').checked;
-        const licenseSpec = parseFloat(document.getElementById('licenseSpec').value) || 0;
-        const licensePed = parseFloat(document.getElementById('licensePed').value) || 0;
-        const writtenScore = parseFloat(document.getElementById('writtenScore').value) || 0;
-        const writtenMax = parseFloat(document.getElementById('writtenMax').value) || 25;
-
+    // === حساب النتائج للإدارة ===
+    window.fetchAndCalculateAll = async () => {
+        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
+        document.querySelector('tbody').innerHTML = "<tr><td colspan='11'>جاري جلب البيانات وتحليلها...</td></tr>";
         try {
-            const q = query(collection(db, "candidate_data"), where("teacher", "==", teacher));
-            const snap = await getDocs(q);
+            await loadCandidatesData(); // تحديث الخريطة
+
+            const evalSnapshot = await getDocs(getCol("evaluations"));
+            let grouped = {};
             
-            const dataObj = { 
-                teacher, age, hasLicense, licenseSpec, licensePed, writtenScore, writtenMax 
-            };
+            evalSnapshot.forEach(d => {
+                const ev = { id: d.id, ...d.data() };
+                if(!grouped[ev.teacher]) grouped[ev.teacher] = { name: ev.teacher, rawSum: 0, count: 0, details: [] };
+                
+                let sum = ev.answers.reduce((a,b)=>a+b, 0);
+                grouped[ev.teacher].rawSum += sum;
+                grouped[ev.teacher].count++;
+                grouped[ev.teacher].details.push({ id: ev.id, evalName: ev.evaluator, answers: ev.answers, sum, notes: ev.notes || "" });
+            });
 
-            if(!snap.empty) {
-                await updateDoc(doc(db, "candidate_data", snap.docs[0].id), dataObj);
-            } else {
-                await addDoc(collection(db, "candidate_data"), dataObj);
-            }
-            alert("✅ تم تحديث بيانات المرشح");
-            calculateResults(); // إعادة تحميل الجدول
-        } catch(e) {
-            alert("خطأ: " + e.message);
-        }
-    };
-
-    // === حساب النتائج وعرض الجدول ===
-    window.calculateResults = async () => {
-        if(window.isDataLoaded && window.allResults) {
-            renderTable(window.allResults);
-            return;
-        }
-
-        document.querySelector('tbody').innerHTML = "<tr><td colspan='10'>جاري جلب البيانات وتحليلها...</td></tr>";
-        
-        try {
-            // 1. جلب التقييمات
-            const evalSnapshot = await getDocs(collection(db, "evaluations"));
-            const evaluations = [];
-            evalSnapshot.forEach(d => evaluations.push({ id: d.id, ...d.data() }));
-
-            // 2. جلب بيانات المرشحين الإضافية
-            const candDataSnapshot = await getDocs(collection(db, "candidate_data"));
-            const candMap = {};
-            candDataSnapshot.forEach(d => { candMap[d.data().teacher] = d.data(); });
-            
-            // دعم للبيانات القديمة
-            const oldTestsSnapshot = await getDocs(collection(db, "tests"));
-            oldTestsSnapshot.forEach(d => {
-                if(!candMap[d.data().teacher]) {
-                    candMap[d.data().teacher] = { 
-                        writtenScore: d.data().score, writtenMax: 25, age: 0, hasLicense: false 
-                    };
+            // دمج الذين لديهم بيانات مدخلة ولكن لم يتم تقييمهم بعد
+            Object.keys(window.candidatesDataMap).forEach(teacherName => {
+                if(!grouped[teacherName]) {
+                    grouped[teacherName] = { name: teacherName, rawSum: 0, count: 0, details: [] };
                 }
             });
 
-            // 3. تجميع البيانات
-            let grouped = {};
-            evaluations.forEach(ev => {
-                if(!grouped[ev.teacher]) grouped[ev.teacher] = { name: ev.teacher, rawSum: 0, count: 0, details: [] };
-                
-                // التأكد من أن عدد الإجابات يتوافق مع المعايير الحالية (لتجنب الأخطاء مع البيانات القديمة)
-                // إذا كانت البيانات قديمة (أقل من 7 بنود)، نعتبرها صالحة للحساب ولكن قد تؤثر على الدقة
-                let sum = ev.answers.reduce((a,b)=>a+b, 0);
-                
-                grouped[ev.teacher].rawSum += sum;
-                grouped[ev.teacher].count++;
-                grouped[ev.teacher].details.push({ 
-                    id: ev.id,
-                    evalName: ev.evaluator, 
-                    answers: ev.answers, 
-                    sum,
-                    notes: ev.notes || ""
-                });
-            });
-
-            // 4. الحسابات النهائية
             let results = Object.values(grouped).map(c => {
-                const cData = candMap[c.name] || { writtenScore: 0, writtenMax: 25, age: 0, hasLicense: false, licenseSpec: 0, licensePed: 0 };
+                const cData = window.candidatesDataMap[c.name] || { writtenScore: 0, writtenMax: 25, age: 0, hasLicense: false, licenseSpec: 0, licensePed: 0, specialization: 'غير محدد', experienceYears: 0, expInsideKSA: true };
                 
-                // معادلة المقابلة: نأخذ المتوسط بالنسبة المئوية ثم نضربه في 75
-                // ملاحظة: بما أن عدد الأسئلة ثابت (7) والدرجة العظمى (5)
-                const maxPossiblePerEval = criteriaList.length * 5; 
-                let avgPed = (c.rawSum / (c.count * maxPossiblePerEval)) * 75;
+                let avgPed = c.count > 0 ? ((c.rawSum / (c.count * (criteriaList.length * 5))) * 75) : 0;
                 
                 return {
                     ...c,
                     avgPed: avgPed.toFixed(1),
                     cData: cData,
-                    final: (avgPed + cData.writtenScore).toFixed(1)
+                    final: (avgPed + (cData.writtenScore || 0)).toFixed(1)
                 };
             });
 
             results.sort((a,b) => b.final - a.final);
-            window.allResults = results;
-            window.isDataLoaded = true;
-
-            renderTable(results);
-            updateCandidateSelect(results.map(r => r.name));
-            
-            document.getElementById('selectCandidate').onchange = (e) => fillAdminForm(e.target.value);
+            window.allCalculatedResults = results;
+            window.applyAdminFilters(); // تطبيق الفلتر وعرض الجدول
 
         } catch (e) {
             console.error(e);
-            document.querySelector('tbody').innerHTML = `<tr><td colspan='10' style='color:red'>خطأ: ${e.message}</td></tr>`;
+            document.querySelector('tbody').innerHTML = `<tr><td colspan='11' style='color:red'>خطأ: ${e.message}</td></tr>`;
         }
+    };
+
+    // الفلترة وعرض الجدول
+    window.applyAdminFilters = () => {
+        const specFilter = document.getElementById('filterSpec').value;
+        const searchTerm = document.getElementById('searchName').value.toLowerCase();
+        
+        let filtered = window.allCalculatedResults.filter(r => {
+            const matchSpec = specFilter === "الجميع" || r.cData.specialization === specFilter;
+            const matchName = r.name.toLowerCase().includes(searchTerm);
+            return matchSpec && matchName;
+        });
+
+        renderTable(filtered);
     };
 
     function renderTable(data) {
@@ -426,16 +818,19 @@
         const targetCount = parseInt(document.getElementById('targetCount').value) || 5;
 
         tbody.innerHTML = "";
+        if(data.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='11'>لا توجد نتائج تطابق بحثك.</td></tr>";
+            return;
+        }
+
         data.forEach((r, i) => {
             let isQualified = i < targetCount;
             let rowClass = isQualified ? "qualified" : "waitlist";
+            let statusBadge = isQualified ? `<span class="badge badge-success">✅ مرشح</span>` : `<span class="badge badge-warning">⏳ احتياط</span>`;
             
-            let statusBadge = isQualified 
-                ? `<span class="badge badge-success">✅ مرشح</span>` 
-                : `<span class="badge badge-warning">⏳ احتياط</span>`;
-
             let ageDisplay = r.cData.age ? `<span class="${r.cData.age > 42 ? 'age-red' : 'age-green'}">${r.cData.age}</span>` : "-";
-            
+            let expBadge = `<span class="badge ${r.cData.expInsideKSA ? 'badge-success' : 'badge-warning'}">${r.cData.experienceYears} س</span>`;
+
             let licIcon = "❌";
             if (r.cData.hasLicense) {
                 if(r.cData.licenseSpec > 0 && r.cData.licensePed > 0) licIcon = "🏅"; 
@@ -446,74 +841,50 @@
             tbody.innerHTML += `
                 <tr class="${rowClass}">
                     <td>${i+1}</td>
-                    <td style="text-align:right; font-weight:bold;">${r.name} <br> <small style="color:#666">عدد المقيمين: ${r.count}</small></td>
+                    <td style="text-align:right; font-weight:bold;">${r.name} <br> <small style="color:#666">مقيمين: ${r.count}</small></td>
+                    <td><span class="badge badge-info">${r.cData.specialization}</span></td>
                     <td>${ageDisplay}</td>
+                    <td>${expBadge}</td>
                     <td class="license-icon" title="تخصص: ${r.cData.licenseSpec} | تربوي: ${r.cData.licensePed}">${licIcon}</td>
                     <td>${r.avgPed}</td>
-                    <td>${r.cData.writtenScore} <span style="font-size:0.8em; color:#777">/ ${r.cData.writtenMax}</span></td>
+                    <td>${r.cData.writtenScore || 0} <span style="font-size:0.8em; color:#777">/ ${r.cData.writtenMax || 25}</span></td>
                     <td style="font-size:1.1em; font-weight:bold; color:var(--primary)">${r.final}</td>
                     <td>${statusBadge}</td>
-                    <td class="no-print"><button onclick="showDetails('${r.name}')" style="cursor:pointer">👁️ عرض</button></td>
+                    <td class="no-print">
+                        <button onclick="showDetails('${r.name}')" style="cursor:pointer; background:none; border:none; font-size:1.2em;" title="عرض التفاصيل">👁️</button>
+                        <button onclick="deleteCandidate('${r.name}')" style="cursor:pointer; background:none; border:none; font-size:1.2em;" title="حذف المعلم وتقييماته">🗑️</button>
+                    </td>
                 </tr>`;
         });
     }
 
-    function fillAdminForm(name) {
-        const r = window.allResults.find(x => x.name === name);
-        if(!r) return;
-        const d = r.cData;
-        document.getElementById('candAge').value = d.age || "";
-        document.getElementById('hasLicense').checked = d.hasLicense || false;
-        document.getElementById('licenseSpec').value = d.licenseSpec || "";
-        document.getElementById('licensePed').value = d.licensePed || "";
-        document.getElementById('writtenScore').value = d.writtenScore || "";
-        document.getElementById('writtenMax').value = d.writtenMax || 25;
-    }
-
-    function updateCandidateSelect(names) {
-        const sel = document.getElementById('selectCandidate');
-        const currentVal = sel.value;
-        sel.innerHTML = "<option value=''>-- اختر معلماً لتعديل بياناته --</option>";
-        names.forEach(n => sel.innerHTML += `<option value="${n}">${n}</option>`);
-        if(names.includes(currentVal)) sel.value = currentVal;
-    }
-
-    window.deleteEval = async (id, teacherName) => {
-        if(!confirm("هل أنت متأكد تماماً من حذف هذا التقييم؟ لا يمكن التراجع عن هذا الإجراء.")) return;
-        try {
-            await deleteDoc(doc(db, "evaluations", id));
-            alert("تم حذف التقييم.");
-            document.getElementById('detailsModal').style.display = "none";
-            window.isDataLoaded = false; 
-            calculateResults(); 
-        } catch(e) {
-            alert("فشل الحذف: " + e.message);
-        }
-    }
-
-    // === عرض التفاصيل والطباعة ===
+    // === المودال والتفاصيل ===
     window.showDetails = (name) => {
-        const r = window.allResults.find(x => x.name === name);
+        const r = window.allCalculatedResults.find(x => x.name === name);
         if(!r) return;
+        
         document.getElementById('detailsModal').style.display = "block";
-        document.body.classList.add('modal-open'); // فئة للتحكم بالطباعة
+        document.body.classList.add('modal-open'); 
         document.getElementById('modalTitle').innerText = "تقرير المعلم: " + name;
         
-        let licText = r.cData.hasLicense 
-            ? `نعم (تخصص: ${r.cData.licenseSpec}، تربوي: ${r.cData.licensePed})` 
-            : "لا يوجد";
+        let licText = r.cData.hasLicense ? `نعم (تخصص: ${r.cData.licenseSpec}، تربوي: ${r.cData.licensePed})` : "لا يوجد";
+        let expText = `${r.cData.experienceYears} سنوات (${r.cData.expInsideKSA ? 'داخل المملكة' : 'خارج المملكة'})`;
             
+        // تحديد الترتيب ضمن الفلتر الحالي للطباعة
+        const currentDataOnScreen = Array.from(document.querySelectorAll('#resultsTable tbody tr')).map(tr => tr.cells[1].innerText.split('\n')[0].trim());
+        const rank = currentDataOnScreen.indexOf(name) + 1;
         const targetCount = parseInt(document.getElementById('targetCount').value) || 5;
-        const rank = window.allResults.indexOf(r) + 1;
-        const statusText = rank <= targetCount ? "✅ مرشح" : "⏳ احتياط";
+        const statusText = (rank > 0 && rank <= targetCount) ? "✅ مرشح" : "⏳ احتياط";
 
         document.getElementById('modalSummary').innerHTML = `
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div><b>الحالة:</b> ${statusText} (الترتيب: ${rank})</div>
+                <div><b>التخصص:</b> ${r.cData.specialization}</div>
+                <div><b>الحالة:</b> ${statusText} (الترتيب بالفلتر الحالي: ${rank || '-'})</div>
                 <div><b>العمر:</b> ${r.cData.age || "-"}</div>
+                <div><b>الخبرة:</b> ${expText}</div>
                 <div><b>الرخصة:</b> ${licText}</div>
                 <div><b>درجة المقابلة:</b> ${r.avgPed} / 75</div>
-                <div><b>الاختبار:</b> ${r.cData.writtenScore} / ${r.cData.writtenMax}</div>
+                <div><b>الاختبار التحريري:</b> ${r.cData.writtenScore || 0} / ${r.cData.writtenMax || 25}</div>
                 <div style="grid-column: span 2; border-top:1px solid #ddd; margin-top:5px; padding-top:5px; font-size:1.2em; color:var(--primary)"><b>الدرجة النهائية: ${r.final}</b></div>
             </div>
         `;
@@ -521,75 +892,170 @@
         const div = document.getElementById('evaluatorsBreakdown');
         div.innerHTML = "";
         
-        r.details.forEach(d => {
-            let rows = "";
-            d.answers.forEach((ans, idx) => {
-                // استخدام اسم البند إذا كان متوفراً، وإلا فاستخدام الفهرس (للتوافق مع بيانات قديمة إن وجدت)
-                let critTitle = criteriaList[idx] ? criteriaList[idx].title : `بند رقم ${idx+1}`;
-                rows += `<tr><td style='text-align:right'>${critTitle}</td><td><b>${ans}</b></td></tr>`;
-            });
-            
-            let notesHtml = d.notes ? `<div class="note-box">📝 <b>ملاحظات المقيم:</b> ${d.notes}</div>` : "";
+        if(r.details.length === 0) {
+            div.innerHTML = "<p>لم يتم تقييمه من قبل اللجنة بعد.</p>";
+        } else {
+            r.details.forEach(d => {
+                let rows = "";
+                d.answers.forEach((ans, idx) => {
+                    let critTitle = criteriaList[idx] ? criteriaList[idx].title : `بند رقم ${idx+1}`;
+                    rows += `<tr><td style='text-align:right'>${critTitle}</td><td><b>${ans}</b></td></tr>`;
+                });
+                
+                let notesHtml = d.notes ? `<div class="note-box">📝 <b>ملاحظات المقيم:</b> ${d.notes}</div>` : "";
 
-            div.innerHTML += `
-                <details>
-                    <summary>
-                        <span>👤 ${d.evalName} (مجموع: ${d.sum})</span>
-                        <button class="delete-btn no-print" onclick="deleteEval('${d.id}', '${r.name}')">حذف التقييم</button>
-                    </summary>
-                    <div style="padding:10px;">
-                        <table style="width:100%">${rows}</table>
-                        ${notesHtml}
-                    </div>
-                </details>`;
-        });
+                div.innerHTML += `
+                    <details>
+                        <summary>
+                            <span>👤 ${d.evalName} (مجموع: ${d.sum})</span>
+                            <button class="delete-btn no-print" onclick="deleteEval('${d.id}')">حذف التقييم</button>
+                        </summary>
+                        <div style="padding:10px;">
+                            <table style="width:100%">${rows}</table>
+                            ${notesHtml}
+                        </div>
+                    </details>`;
+            });
+        }
     };
 
-    // دالة خاصة لطباعة التقرير وفتح جميع التفاصيل
+    window.deleteEval = async (id) => {
+        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
+        if(!confirm("هل أنت متأكد من حذف هذا التقييم نهائياً؟")) return;
+        try {
+            await deleteDoc(getDRef("evaluations", id));
+            alert("تم الحذف.");
+            document.getElementById('detailsModal').style.display = "none";
+            window.fetchAndCalculateAll(); 
+        } catch(e) { alert("فشل الحذف: " + e.message); }
+    }
+
+    window.deleteCandidate = async (name) => {
+        if (!currentUser) return;
+        if(!confirm(`هل أنت متأكد من حذف المعلم "${name}" وجميع بياناته وتقييماته نهائياً؟`)) return;
+
+        try {
+            if (window.candidatesDataMap[name]) {
+                await deleteDoc(getDRef("candidate_data", window.candidatesDataMap[name].id));
+            }
+            const qData = query(getCol("evaluations"), where("teacher", "==", name));
+            const snap = await getDocs(qData);
+            const deletePromises = [];
+            snap.forEach(d => deletePromises.push(deleteDoc(getDRef("evaluations", d.id))));
+            await Promise.all(deletePromises);
+
+            alert("✅ تم حذف المعلم وجميع بياناته بنجاح.");
+            window.fetchAndCalculateAll();
+        } catch (e) {
+            alert("خطأ أثناء الحذف: " + e.message);
+        }
+    };
+
+    window.deleteAllData = async () => {
+        if (!currentUser) return;
+        if(!confirm("⚠️ تحذير خطير: هل أنت متأكد من حذف جميع بيانات المعلمين والتقييمات بشكل نهائي؟!")) return;
+        if(!confirm("تأكيد أخير: لا يمكن التراجع عن هذا الإجراء. هل تريد مسح كل شيء للبدء من جديد؟")) return;
+
+        try {
+            const cSnap = await getDocs(getCol("candidate_data"));
+            const p1 = [];
+            cSnap.forEach(d => p1.push(deleteDoc(getDRef("candidate_data", d.id))));
+
+            const eSnap = await getDocs(getCol("evaluations"));
+            const p2 = [];
+            eSnap.forEach(d => p2.push(deleteDoc(getDRef("evaluations", d.id))));
+
+            await Promise.all([...p1, ...p2]);
+            alert("✅ تم إعادة ضبط النظام وحذف جميع بيانات المرشحين والتقييمات بنجاح.");
+            window.fetchAndCalculateAll();
+        } catch(e) {
+            alert("خطأ: " + e.message);
+        }
+    };
+
     window.printReport = () => {
-        // فتح كل عناصر details لرؤية المحتوى عند الطباعة
         const details = document.querySelectorAll('#evaluatorsBreakdown details');
         details.forEach(d => d.open = true);
-        
         window.print();
-        
-        // (اختياري) إغلاقها مرة أخرى بعد الطباعة للحفاظ على الترتيب في الشاشة، 
-        // لكن المتصفحات الحديثة قد تنفذ الكود قبل انتهاء الطباعة فعلياً. 
-        // الأفضل تركها مفتوحة أو استخدام CSS للتحكم.
     };
 
-    // ربط الأزرار
-    document.getElementById('btnSubmit').onclick = window.submitEvaluation;
-    document.getElementById('btnSaveCandidateData').onclick = window.saveCandidateData;
-    
-    document.getElementById('btnShowEval').onclick = () => { 
-        document.getElementById('evaluatorPage').classList.remove('hidden'); 
-        document.getElementById('adminLoginPage').classList.add('hidden'); 
-        document.getElementById('adminDashboard').classList.add('hidden'); 
+    // === التنقل بين الصفحات ===
+    const pages = ['mainEntrance', 'evaluatorPage', 'correctorPage', 'adminLoginPage', 'adminDashboard', 'evalLoginPage', 'corrLoginPage'];
+    window.showPage = function(pageId) {
+        pages.forEach(p => {
+            const el = document.getElementById(p);
+            if(el) el.classList.add('hidden');
+        });
+        const target = document.getElementById(pageId);
+        if(target) target.classList.remove('hidden');
     };
-    
-    document.getElementById('btnShowAdmin').onclick = () => { 
-        document.getElementById('adminLoginPage').classList.remove('hidden'); 
-        document.getElementById('evaluatorPage').classList.add('hidden'); 
+
+    document.getElementById('btnLoginEval').onclick = () => {
+        if(document.getElementById('evalPass').value === "1111") {
+            showPage('evaluatorPage');
+        } else alert("كلمة المرور خاطئة");
+    };
+
+    document.getElementById('btnLoginCorr').onclick = () => {
+        if(document.getElementById('corrPass').value === "2222") {
+            showPage('correctorPage');
+            loadCandidatesData(); // تحديث القوائم عند دخول المصحح
+        } else alert("كلمة المرور خاطئة");
     };
 
     document.getElementById('btnLogin').onclick = () => {
         if(document.getElementById('adminPass').value === "admin") {
-            document.getElementById('adminLoginPage').classList.add('hidden');
-            document.getElementById('adminDashboard').classList.remove('hidden');
-            window.isDataLoaded = false;
-            window.calculateResults();
+            showPage('adminDashboard');
+            window.fetchAndCalculateAll();
         } else alert("كلمة المرور خاطئة");
     };
 
     document.getElementById('btnLogout').onclick = () => location.reload();
+    document.getElementById('btnSubmit').onclick = window.submitEvaluation;
     document.getElementById('btnCloseModal').onclick = () => {
         document.getElementById('detailsModal').style.display = "none";
         document.body.classList.remove('modal-open');
     };
-    
-    // تهيئة الصفحة
+
+    // التشغيل الأولي
     renderCriteria();
+    
+    // تهيئة المصادقة
+    const initAuth = async () => {
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && typeof __firebase_config !== 'undefined') {
+                try {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                    return; // نجاح التسجيل عبر التوكن الخاص بالبيئة
+                } catch (e) {
+                    console.warn("فشل تسجيل الدخول بالتوكن المخصص. جاري التحويل للمجهول...", e);
+                }
+            }
+            // تسجيل دخول مجهول إذا فشل التوكن المخصص (لأن التوكن غير صالح لمشروع Firebase الخاص بك)
+            await signInAnonymously(auth);
+        } catch (error) {
+            console.error("Auth error:", error);
+            if (error.code === 'auth/configuration-not-found' || error.code === 'auth/admin-restricted-operation') {
+                alert("تنبيه: يبدو أن خدمة Authentication (تسجيل الدخول المجهول Anonymous) غير مفعلة في مشروع Firebase الخاص بك. يرجى تفعيلها من لوحة تحكم Firebase لكي يعمل النظام بشكل صحيح خارج هذه البيئة.");
+            }
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        if (user) {
+            loadCandidatesData(); // تحميل البيانات الأولية للقوائم المنسدلة
+            loadEvaluators(); // تحميل قائمة المقيمين المعتمدين
+            
+            // إذا كانت لوحة الإدارة مفتوحة، نقوم بتحديثها
+            if (!document.getElementById('adminDashboard').classList.contains('hidden')) {
+                window.fetchAndCalculateAll();
+            }
+        }
+    });
+
+    initAuth();
+
 </script>
 
 </body>
