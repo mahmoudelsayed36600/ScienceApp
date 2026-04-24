@@ -28,7 +28,7 @@
         textarea { resize: vertical; height: 100px; font-family: inherit; }
 
         /* نظام التقييم (الدوائر) */
-        .rating-box { display: flex; gap: 15px; justify-content: space-between; max-width: 500px; margin-top: 10px; }
+        .rating-box { display: flex; gap: 15px; justify-content: space-between; max-width: 500px; margin-top: 10px; flex-wrap: wrap;}
         .radio-wrapper input { display: none; }
         .radio-wrapper span { display: inline-block; width: 45px; height: 45px; line-height: 45px; background: #eee; border-radius: 50%; text-align: center; cursor: pointer; font-weight: bold; font-size: 18px; transition: 0.2s; }
         .radio-wrapper input:checked + span { background: var(--success); color: white; transform: scale(1.15); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
@@ -50,6 +50,7 @@
         .badge-success { background-color: var(--success); }
         .badge-warning { background-color: var(--warning); color: #fff; }
         .badge-info { background-color: var(--primary); }
+        .badge-purple { background-color: var(--purple); }
 
         /* أدوات التحكم والأزرار */
         .hidden { display: none !important; }
@@ -93,6 +94,11 @@
         details { margin-bottom: 10px; border: 1px solid #eee; padding: 5px; border-radius: 5px; }
         summary { cursor: pointer; padding: 10px; background: #f9f9f9; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .note-box { background: #fff3cd; padding: 10px; border-right: 4px solid #ffc107; margin: 10px 0; font-size: 0.9em; border-radius: 4px; }
+        
+        /* Custom Alert */
+        .custom-alert { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #34495e; color: white; padding: 15px 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; display: none; font-weight: bold; text-align: center; min-width: 300px;}
+        .custom-alert.show { display: block; animation: fadeInDown 0.3s; }
+        @keyframes fadeInDown { from { top: -50px; opacity: 0; } to { top: 20px; opacity: 1; } }
 
         @media print { 
             .no-print { display: none !important; } 
@@ -103,11 +109,13 @@
             details[open] summary ~ * { display: block; }
             body.modal-open > *:not(#detailsModal) { display: none; }
             body.modal-open #detailsModal { display: block; }
-            .admin-tab-content { display: block !important; } /* إظهار كل المحتوى عند الطباعة إن لزم الأمر */
+            .admin-tab-content { display: block !important; } 
         }
     </style>
 </head>
 <body>
+
+<div id="customAlertBox" class="custom-alert"></div>
 
 <div class="header no-print"><h2>لجنة توظيف معلمي العلوم (Online)</h2></div>
 
@@ -149,7 +157,10 @@
         </div>
     </div>
     
-    <div id="criteriaContainer">Loading...</div>
+    <!-- حاوية بنود التقييم التفاعلية -->
+    <div id="criteriaContainer" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e1e8ed; margin-bottom: 20px;">
+        <div style="text-align:center; padding: 20px; color:#666;">جاري تحميل بنود التقييم...</div>
+    </div>
     
     <div class="form-group">
         <label>ملاحظات إضافية (اختياري):</label>
@@ -175,6 +186,14 @@
                 <datalist id="teacherNamesList"></datalist>
             </div>
             
+            <div style="grid-column: span 2;">
+                <label class="small-input">اسم المدرسة:</label>
+                <select id="corrSchoolName" class="small-input">
+                    <option value="مدارس التعلم ثنائي اللغة فرع العقيق">مدارس التعلم ثنائي اللغة فرع العقيق</option>
+                    <option value="مدارس التعلم ثنائي اللغة فرع العارض">مدارس التعلم ثنائي اللغة فرع العارض</option>
+                </select>
+            </div>
+
             <div style="grid-column: span 2;">
                 <label class="small-input">التخصص:</label>
                 <select id="corrSpecialization" class="small-input">
@@ -277,15 +296,24 @@
 
     <!-- تبويبات الإدارة -->
     <div class="admin-tabs no-print">
-        <button class="admin-tab-btn active" onclick="window.switchAdminTab(event, 'tab-results')">📊 النتائج والفلترة</button>
+        <button class="admin-tab-btn active" onclick="window.switchAdminTab(event, 'tab-results')">📊 النتائج</button>
         <button class="admin-tab-btn" onclick="window.switchAdminTab(event, 'tab-edit-candidates')">📝 تعديل المرشحين</button>
-        <button class="admin-tab-btn" onclick="window.switchAdminTab(event, 'tab-evaluators')">👥 إدخال المقيمين</button>
+        <button class="admin-tab-btn" onclick="window.switchAdminTab(event, 'tab-evaluators')">👥 المقيمين</button>
+        <button class="admin-tab-btn" onclick="window.switchAdminTab(event, 'tab-criteria-manage')">📋 بنود التقييم</button>
     </div>
 
     <!-- التبويب 1: النتائج -->
     <div id="tab-results" class="admin-tab-content active">
         <!-- شريط الفلاتر والبحث -->
         <div class="admin-filters no-print">
+            <div class="filter-item">
+                <label>المدرسة:</label>
+                <select id="filterSchool" onchange="window.applyAdminFilters()">
+                    <option value="الجميع">الجميع</option>
+                    <option value="مدارس التعلم ثنائي اللغة فرع العقيق">مدارس التعلم ثنائي اللغة فرع العقيق</option>
+                    <option value="مدارس التعلم ثنائي اللغة فرع العارض">مدارس التعلم ثنائي اللغة فرع العارض</option>
+                </select>
+            </div>
             <div class="filter-item">
                 <label>التخصص:</label>
                 <select id="filterSpec" onchange="window.applyAdminFilters()">
@@ -314,6 +342,7 @@
                     <tr>
                         <th rowspan="2">#</th>
                         <th rowspan="2">المعلم</th>
+                        <th rowspan="2">المدرسة</th>
                         <th rowspan="2">التخصص</th>
                         <th rowspan="2">العمر</th>
                         <th rowspan="2">الخبرة</th>
@@ -350,6 +379,14 @@
                     <select id="adminSelectCandidate" class="small-input" onchange="window.fillAdminForm(this.value)"><option>جاري التحميل...</option></select>
                 </div>
                 
+                <div style="grid-column: span 2;">
+                    <label class="small-input">المدرسة:</label>
+                    <select id="adminSchoolName" class="small-input">
+                        <option value="مدارس التعلم ثنائي اللغة فرع العقيق">مدارس التعلم ثنائي اللغة فرع العقيق</option>
+                        <option value="مدارس التعلم ثنائي اللغة فرع العارض">مدارس التعلم ثنائي اللغة فرع العارض</option>
+                    </select>
+                </div>
+
                 <div>
                     <label class="small-input">التخصص:</label>
                     <select id="adminSpecialization" class="small-input">
@@ -408,6 +445,33 @@
         </div>
     </div>
 
+    <!-- التبويب 4: إدارة بنود التقييم -->
+    <div id="tab-criteria-manage" class="admin-tab-content no-print">
+        <div class="data-panel" style="background: #fdf5e6; border-color: #fbd698;">
+            <h4 style="margin-top:0; color:var(--warning);">📋 إدارة بنود التقييم</h4>
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">إضافة أو حذف البنود سيتم عكسه فوراً في نموذج تقييم المقيمين. سيتم حساب درجة المقابلة (من 75) كنسبة وتناسب بناءً على عدد البنود المتاحة.</p>
+            
+            <div class="data-grid" style="grid-template-columns: 1fr 2fr auto;">
+                <div>
+                    <label class="small-input">عنوان البند:</label>
+                    <input type="text" id="newCriteriaTitle" class="small-input" placeholder="مثال: المهارات التقنية">
+                </div>
+                <div>
+                    <label class="small-input">الوصف / التفاصيل:</label>
+                    <input type="text" id="newCriteriaSub" class="small-input" placeholder="مثال: استخدام التكنولوجيا وتطبيقات التعلم...">
+                </div>
+                <div>
+                    <button class="action-btn" style="background:var(--warning); margin-top: 27px; height: 42px; padding: 0 20px;" onclick="window.addCriteria()">إضافة البند</button>
+                </div>
+            </div>
+
+            <h5 style="margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">البنود الحالية المعتمدة:</h5>
+            <ul id="adminCriteriaList" style="list-style:none; padding:0; margin:0; max-height: 400px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 4px;">
+                <li style="padding: 10px; border-bottom: 1px solid #eee;">جاري التحميل...</li>
+            </ul>
+        </div>
+    </div>
+
 </div>
 
 <!-- ========================================== -->
@@ -434,7 +498,6 @@
     import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    // Your web app's custom Firebase configuration
     const customFirebaseConfig = {
         apiKey: "AIzaSyB2jsilWQtu4DUaaPsdVQ2lw6Q9_-bpwEI",
         authDomain: "science-eval-app.firebaseapp.com",
@@ -444,37 +507,29 @@
         appId: "1:789546485824:web:8e9c6d0895c82afe7db7a5"
     };
 
-    // Use Canvas internal config if available, otherwise fallback to the custom config
     const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : customFirebaseConfig;
-
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
     const db = getFirestore(app);
     const auth = getAuth(app);
-    
     let currentUser = null;
 
     const getCol = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
     const getDRef = (name, id) => doc(db, 'artifacts', appId, 'public', 'data', name, id);
 
-    // بنود التقييم
-    const criteriaList = [
-        { title: "1. المهارات التربوية", sub: "تشمل التخطيط، إدارة الصف، تقييم الطلاب، الفروق الفردية" },
-        { title: "2. المعرفة العلمية", sub: "وتشمل التمكن من المحتوى العلمي وصحته" },
-        { title: "3. استراتيجيات التدريس", sub: "تنوع الأساليب، التعلم النشط، التبسيط" },
-        { title: "4. التقويم والمتابعة", sub: "قياس الفهم، التغذية الراجعة، المتابعة المستمرة" },
-        { title: "5. المهارات التقنية", sub: "استخدام التكنولوجيا، الوسائل الحديثة، التطبيقات" },
-        { title: "6. التواصل", sub: "التواصل الفعال مع الطلاب وأولياء الأمور" },
-        { title: "7. السمات الشخصية", sub: "الثقة، المظهر، القدوة، الاتزان" }
-    ];
-
-    // متغيرات عامة لحفظ البيانات
+    // متغيرات عامة
     window.candidatesDataMap = {}; 
     window.allCalculatedResults = []; 
     window.evaluatorsList = []; 
+    window.criteriaList = []; // تحويلها لمتغير ديناميكي من قاعدة البيانات
+
+    // الدالة البديلة للـ alert
+    window.showAlert = (message) => {
+        const box = document.getElementById('customAlertBox');
+        box.innerText = message;
+        box.classList.add('show');
+        setTimeout(() => { box.classList.remove('show'); }, 4000);
+    };
 
     // === التنقل بين تبويبات الإدارة ===
     window.switchAdminTab = (event, tabId) => {
@@ -483,6 +538,131 @@
         document.getElementById(tabId).classList.add('active');
         event.currentTarget.classList.add('active');
     };
+
+    // === إدارة بنود التقييم ديناميكياً ===
+    async function loadCriteria() {
+        if (!currentUser) return;
+        try {
+            const snap = await getDocs(getCol("evaluation_criteria"));
+            window.criteriaList = [];
+            snap.forEach(d => window.criteriaList.push({ id: d.id, ...d.data() }));
+            
+            // ترتيب البنود حسب وقت الإضافة
+            window.criteriaList.sort((a,b) => a.timestamp.localeCompare(b.timestamp));
+
+            // إذا كانت قاعدة البيانات فارغة، نقوم بزرع البنود الافتراضية
+            if(window.criteriaList.length === 0) {
+                const defaultCriteria = [
+                    { title: "المهارات التربوية", sub: "تشمل التخطيط، إدارة الصف، تقييم الطلاب، الفروق الفردية" },
+                    { title: "المعرفة العلمية", sub: "وتشمل التمكن من المحتوى العلمي وصحته" },
+                    { title: "استراتيجيات التدريس", sub: "تنوع الأساليب، التعلم النشط، التبسيط" },
+                    { title: "التقويم والمتابعة", sub: "قياس الفهم، التغذية الراجعة، المتابعة المستمرة" },
+                    { title: "المهارات التقنية", sub: "استخدام التكنولوجيا، الوسائل الحديثة، التطبيقات" },
+                    { title: "التواصل", sub: "التواصل الفعال مع الطلاب وأولياء الأمور" },
+                    { title: "السمات الشخصية", sub: "الثقة، المظهر، القدوة، الاتزان" }
+                ];
+                
+                let promises = defaultCriteria.map(c => addDoc(getCol("evaluation_criteria"), { ...c, timestamp: new Date().toISOString() }));
+                await Promise.all(promises);
+                
+                // إعادة التحميل بعد الزرع
+                const newSnap = await getDocs(getCol("evaluation_criteria"));
+                window.criteriaList = [];
+                newSnap.forEach(d => window.criteriaList.push({ id: d.id, ...d.data() }));
+                window.criteriaList.sort((a,b) => a.timestamp.localeCompare(b.timestamp));
+            }
+
+            renderCriteriaUI(); // واجهة الإدارة
+            renderCriteriaForEvaluator(); // واجهة المقيم
+
+        } catch(e) {
+            console.error("خطأ في جلب البنود:", e);
+        }
+    }
+
+    window.addCriteria = async () => {
+        const titleInput = document.getElementById('newCriteriaTitle');
+        const subInput = document.getElementById('newCriteriaSub');
+        const title = titleInput.value.trim();
+        const sub = subInput.value.trim();
+
+        if(!title) { showAlert("الرجاء إدخال عنوان البند على الأقل"); return; }
+        if (!currentUser) return;
+
+        try {
+            await addDoc(getCol("evaluation_criteria"), { 
+                title: title, 
+                sub: sub, 
+                timestamp: new Date().toISOString() 
+            });
+            titleInput.value = "";
+            subInput.value = "";
+            showAlert("✅ تم إضافة البند بنجاح");
+            await loadCriteria(); // إعادة تحميل القائمة
+        } catch(e) {
+            showAlert("خطأ في إضافة البند: " + e.message);
+        }
+    };
+
+    window.deleteCriteria = async (id) => {
+        if (!currentUser) return;
+        if(!confirm("⚠️ تأكيد: هل أنت متأكد من حذف هذا البند؟\nملاحظة: حذفه لن يؤثر على درجات التقييمات السابقة التي تم إرسالها مسبقاً بناءً عليه.")) return;
+        
+        try {
+            await deleteDoc(getDRef("evaluation_criteria", id));
+            showAlert("🗑️ تم حذف البند");
+            await loadCriteria();
+        } catch(e) {
+            showAlert("خطأ في الحذف: " + e.message);
+        }
+    };
+
+    function renderCriteriaUI() {
+        const adminList = document.getElementById('adminCriteriaList');
+        if (!adminList) return;
+        
+        adminList.innerHTML = "";
+        if (window.criteriaList.length === 0) {
+            adminList.innerHTML = "<li style='padding: 10px;'>لا توجد بنود حالياً.</li>";
+            return;
+        }
+
+        window.criteriaList.forEach((c, index) => {
+            adminList.innerHTML += `
+                <li style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${index + 1}. ${c.title}</strong>
+                        <div style="font-size: 12px; color: #666;">${c.sub}</div>
+                    </div>
+                    <button class="delete-btn no-print" style="margin:0;" onclick="window.deleteCriteria('${c.id}')">حذف</button>
+                </li>`;
+        });
+    }
+
+    function renderCriteriaForEvaluator() {
+        const container = document.getElementById('criteriaContainer');
+        if (!container) return;
+        
+        container.innerHTML = "";
+        
+        if (window.criteriaList.length === 0) {
+            container.innerHTML = "<div style='color:var(--danger); font-weight:bold; padding:20px; text-align:center;'>لا توجد بنود تقييم متاحة. يرجى مراجعة الإدارة.</div>";
+            return;
+        }
+
+        window.criteriaList.forEach((c, index) => {
+            let opts = "";
+            for(let i=1; i<=5; i++) {
+                opts += `<label class="radio-wrapper"><input type="radio" name="q_${index}" value="${i}"><span>${i}</span></label>`;
+            }
+            container.innerHTML += `
+                <div class="form-group" data-criteria-id="${c.id}">
+                    <label>${index + 1}. ${c.title}</label>
+                    <span class="sub-label">${c.sub}</span>
+                    <div class="rating-box">${opts}</div>
+                </div>`;
+        });
+    }
 
     // === دوال التهيئة وجلب البيانات ===
     async function loadCandidatesData() {
@@ -502,21 +682,18 @@
     function updateDropdowns() {
         const names = Object.keys(window.candidatesDataMap).sort();
         
-        // 1. تحديث قائمة المقيم
         const evalSelect = document.getElementById('evalCandName');
         const currentEval = evalSelect.value;
         evalSelect.innerHTML = "<option value=''>-- اختر المعلم المرشح --</option>";
         names.forEach(n => evalSelect.innerHTML += `<option value="${n}">${n}</option>`);
         if(names.includes(currentEval)) evalSelect.value = currentEval;
 
-        // 2. تحديث قائمة الإدارة
         const adminSelect = document.getElementById('adminSelectCandidate');
         const currentAdmin = adminSelect.value;
         adminSelect.innerHTML = "<option value=''>-- اختر معلماً لتعديل بياناته --</option>";
         names.forEach(n => adminSelect.innerHTML += `<option value="${n}">${n}</option>`);
         if(names.includes(currentAdmin)) adminSelect.value = currentAdmin;
 
-        // 3. تحديث قائمة المصحح (Datalist)
         const datalist = document.getElementById('teacherNamesList');
         datalist.innerHTML = "";
         names.forEach(n => datalist.innerHTML += `<option value="${n}">`);
@@ -537,14 +714,12 @@
     }
 
     function updateEvaluatorsUI() {
-        // تحديث قائمة المقيمين المنسدلة في صفحة التقييم
         const evalSelect = document.getElementById('evalName');
         const currentEval = evalSelect.value;
         evalSelect.innerHTML = "<option value=''>-- اختر اسمك --</option>";
         window.evaluatorsList.forEach(ev => evalSelect.innerHTML += `<option value="${ev.name}">${ev.name}</option>`);
         if(window.evaluatorsList.find(e => e.name === currentEval)) evalSelect.value = currentEval;
 
-        // تحديث قائمة الإدارة الخاصة بالمقيمين
         const adminList = document.getElementById('adminEvaluatorsList');
         if (adminList) {
             adminList.innerHTML = "";
@@ -561,12 +736,11 @@
         }
     }
 
-    // === إدارة المقيمين (الإدارة) ===
     window.addEvaluator = async () => {
         const nameInput = document.getElementById('newEvaluatorName');
         const name = nameInput.value.trim();
-        if(!name) { alert("الرجاء إدخال اسم المقيم"); return; }
-        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد."); return; }
+        if(!name) { showAlert("الرجاء إدخال اسم المقيم"); return; }
+        if (!currentUser) return;
 
         try {
             const btn = document.querySelector('button[onclick="window.addEvaluator()"]');
@@ -576,32 +750,21 @@
             await loadEvaluators();
             btn.disabled = false; btn.innerText = "إضافة مقيم";
         } catch (e) {
-            alert("خطأ أثناء إضافة المقيم: " + e.message);
+            showAlert("خطأ أثناء إضافة المقيم: " + e.message);
         }
     };
 
     window.removeEvaluator = async (id) => {
-        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد."); return; }
+        if (!currentUser) return;
         if(!confirm("هل أنت متأكد من حذف هذا المقيم؟")) return;
         try {
             await deleteDoc(getDRef("evaluators_list", id));
             await loadEvaluators();
         } catch (e) {
-            alert("خطأ في الحذف: " + e.message);
+            showAlert("خطأ في الحذف: " + e.message);
         }
     };
 
-    function renderCriteria() {
-        const container = document.getElementById('criteriaContainer');
-        container.innerHTML = "";
-        criteriaList.forEach((c, index) => {
-            let opts = "";
-            for(let i=1; i<=5; i++) opts += `<label class="radio-wrapper"><input type="radio" name="q_${index}" value="${i}"><span>${i}</span></label>`;
-            container.innerHTML += `<div class="form-group"><label>${c.title}</label><span class="sub-label">${c.sub}</span><div class="rating-box">${opts}</div></div>`;
-        });
-    }
-
-    // === تفاعل الواجهات التلقائي ===
     window.showTeacherInfoForEvaluator = () => {
         const name = document.getElementById('evalCandName').value;
         const infoBox = document.getElementById('evalCandInfo');
@@ -609,6 +772,7 @@
             const data = window.candidatesDataMap[name];
             let expLoc = data.expInsideKSA ? 'داخل المملكة' : 'خارج المملكة';
             infoBox.innerHTML = `
+                <b>المدرسة:</b> <span class="badge badge-purple">${data.schoolName || 'غير محدد'}</span> <br>
                 <b>التخصص:</b> <span class="badge badge-info">${data.specialization || 'غير محدد'}</span> <br>
                 <b>الخبرة التعليمية:</b> ${data.experienceYears || 0} سنوات (${expLoc}) <br>
                 <b>العمر:</b> ${data.age || '-'} سنة
@@ -623,6 +787,7 @@
     window.fillCorrectorForm = (name) => {
         if(!name || !window.candidatesDataMap[name]) return;
         const d = window.candidatesDataMap[name];
+        document.getElementById('corrSchoolName').value = d.schoolName || "مدارس التعلم ثنائي اللغة فرع العقيق";
         document.getElementById('corrSpecialization').value = d.specialization || "العلوم أولية";
         document.getElementById('corrAge').value = d.age || "";
         document.getElementById('corrExperience').value = d.experienceYears || 0;
@@ -637,6 +802,7 @@
     window.fillAdminForm = (name) => {
         if(!name || !window.candidatesDataMap[name]) return;
         const d = window.candidatesDataMap[name];
+        document.getElementById('adminSchoolName').value = d.schoolName || "مدارس التعلم ثنائي اللغة فرع العقيق";
         document.getElementById('adminSpecialization').value = d.specialization || "العلوم أولية";
         document.getElementById('adminAge').value = d.age || "";
         document.getElementById('adminExperience').value = d.experienceYears || 0;
@@ -647,16 +813,16 @@
         document.getElementById('adminWrittenScore').value = d.writtenScore || "";
     }
 
-    // === حفظ البيانات (مشترك بين المصحح والإدارة) ===
     window.saveData = async (source) => {
-        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
+        if (!currentUser) { showAlert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
         let prefix = source === 'corrector' ? 'corr' : 'admin';
         
         let teacher = source === 'corrector' ? document.getElementById('corrCandName').value.trim() : document.getElementById('adminSelectCandidate').value;
-        if(!teacher) { alert("الرجاء إدخال/اختيار اسم المعلم أولاً"); return; }
+        if(!teacher) { showAlert("الرجاء إدخال/اختيار اسم المعلم أولاً"); return; }
 
         const dataObj = {
             teacher: teacher,
+            schoolName: document.getElementById(`${prefix}SchoolName`).value,
             specialization: document.getElementById(`${prefix}Specialization`).value,
             age: parseInt(document.getElementById(`${prefix}Age`).value) || 0,
             experienceYears: parseInt(document.getElementById(`${prefix}Experience`).value) || 0,
@@ -684,102 +850,113 @@
                 await updateDoc(getDRef("candidate_data", existingData.id), dataObj);
             } else {
                 const docRef = await addDoc(getCol("candidate_data"), dataObj);
-                dataObj.id = docRef.id; // للاستخدام المباشر دون إعادة تحميل كاملة
+                dataObj.id = docRef.id; 
             }
             
-            alert("✅ تم حفظ بيانات المعلم بنجاح");
+            showAlert("✅ تم حفظ بيانات المعلم بنجاح");
             btn.innerText = originalText; btn.disabled = false;
             
-            // تحديث البيانات محلياً
             await loadCandidatesData(); 
-            if(source === 'admin') window.fetchAndCalculateAll(); // تحديث الجدول فوراً إذا كنا في الإدارة
+            if(source === 'admin') window.fetchAndCalculateAll(); 
 
         } catch(e) {
-            alert("خطأ أثناء الحفظ: " + e.message);
+            showAlert("خطأ أثناء الحفظ: " + e.message);
         }
     };
 
-    // === إرسال التقييم (المقيم) ===
     window.submitEvaluation = async () => {
-        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
+        if (!currentUser) { showAlert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
         const teacher = document.getElementById('evalCandName').value;
         const evaluator = document.getElementById('evalName').value.trim();
         const notes = document.getElementById('evalNotes').value.trim();
         
-        if(!teacher || !evaluator) { alert("الرجاء اختيار المعلم وإدخال اسمك كمقيم"); return; }
+        if(!teacher || !evaluator) { showAlert("الرجاء اختيار المعلم وإدخال اسمك كمقيم"); return; }
+        if(window.criteriaList.length === 0) { showAlert("لا توجد بنود للتقييم، يرجى إبلاغ الإدارة."); return; }
 
         let answers = [];
+        let criteriaSnapshot = []; // حفظ نسخة من البنود مع التقييم لتاريخ التقييم
         let allAnswered = true;
-        criteriaList.forEach((_, i) => {
+
+        window.criteriaList.forEach((c, i) => {
             const sel = document.querySelector(`input[name="q_${i}"]:checked`);
-            if(sel) answers.push(parseInt(sel.value)); else allAnswered = false;
+            if(sel) {
+                answers.push(parseInt(sel.value));
+                criteriaSnapshot.push(c.title); // حفظ عنوان البند
+            } else {
+                allAnswered = false;
+            }
         });
 
-        if(!allAnswered) { alert("الرجاء تقييم جميع البنود السبعة"); return; }
+        if(!allAnswered) { showAlert("الرجاء تقييم جميع البنود"); return; }
 
         try {
             const btn = document.getElementById('btnSubmit');
             btn.innerText = "جاري الإرسال..."; btn.disabled = true;
             
             await addDoc(getCol("evaluations"), {
-                teacher, evaluator, answers, notes, timestamp: new Date().toISOString()
+                teacher, 
+                evaluator, 
+                answers, 
+                criteriaSnapshot, // حفظنا أسماء البنود التي تم التقييم بناءً عليها
+                notes, 
+                timestamp: new Date().toISOString()
             });
             
-            alert("✅ تم إرسال التقييم بنجاح!");
+            showAlert("✅ تم إرسال التقييم بنجاح!");
             
-            // تفريغ النموذج بعد الإرسال بدون إعادة تحميل الصفحة (لمنع الخروج)
             document.getElementById('evalNotes').value = "";
-            document.getElementById('evalCandName').value = ""; // إعادة تعيين اختيار المعلم
-            window.showTeacherInfoForEvaluator(); // إخفاء صندوق بيانات المعلم
+            document.getElementById('evalCandName').value = ""; 
+            window.showTeacherInfoForEvaluator(); 
             
-            // إلغاء تحديد جميع الدوائر (الراديو)
-            criteriaList.forEach((_, i) => {
+            window.criteriaList.forEach((_, i) => {
                 const radios = document.querySelectorAll(`input[name="q_${i}"]`);
                 radios.forEach(r => r.checked = false);
             });
 
-            // إعادة زر الإرسال لوضعه الطبيعي
             btn.innerText = "إرسال التقييم";
             btn.disabled = false;
 
         } catch (e) {
-            alert("حدث خطأ: " + e.message);
+            showAlert("حدث خطأ: " + e.message);
             document.getElementById('btnSubmit').innerText = "إرسال التقييم";
             document.getElementById('btnSubmit').disabled = false;
         }
     };
 
-    // === حساب النتائج للإدارة ===
     window.fetchAndCalculateAll = async () => {
-        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
-        document.querySelector('tbody').innerHTML = "<tr><td colspan='11'>جاري جلب البيانات وتحليلها...</td></tr>";
+        if (!currentUser) return;
+        document.querySelector('tbody').innerHTML = "<tr><td colspan='12'>جاري جلب البيانات وتحليلها...</td></tr>";
         try {
-            await loadCandidatesData(); // تحديث الخريطة
+            await loadCandidatesData(); 
 
             const evalSnapshot = await getDocs(getCol("evaluations"));
             let grouped = {};
             
             evalSnapshot.forEach(d => {
                 const ev = { id: d.id, ...d.data() };
-                if(!grouped[ev.teacher]) grouped[ev.teacher] = { name: ev.teacher, rawSum: 0, count: 0, details: [] };
+                if(!grouped[ev.teacher]) grouped[ev.teacher] = { name: ev.teacher, rawSum: 0, count: 0, totalMaxPossible: 0, details: [] };
                 
                 let sum = ev.answers.reduce((a,b)=>a+b, 0);
+                // الحساب الديناميكي بناءً على عدد الإجابات (لأن عدد البنود قد يتغير)
+                let maxPossibleForThisEval = ev.answers.length * 5; 
+
                 grouped[ev.teacher].rawSum += sum;
+                grouped[ev.teacher].totalMaxPossible += maxPossibleForThisEval;
                 grouped[ev.teacher].count++;
-                grouped[ev.teacher].details.push({ id: ev.id, evalName: ev.evaluator, answers: ev.answers, sum, notes: ev.notes || "" });
+                grouped[ev.teacher].details.push({ id: ev.id, evalName: ev.evaluator, answers: ev.answers, criteriaSnapshot: ev.criteriaSnapshot, sum, maxPossible: maxPossibleForThisEval, notes: ev.notes || "" });
             });
 
-            // دمج الذين لديهم بيانات مدخلة ولكن لم يتم تقييمهم بعد
             Object.keys(window.candidatesDataMap).forEach(teacherName => {
                 if(!grouped[teacherName]) {
-                    grouped[teacherName] = { name: teacherName, rawSum: 0, count: 0, details: [] };
+                    grouped[teacherName] = { name: teacherName, rawSum: 0, count: 0, totalMaxPossible: 0, details: [] };
                 }
             });
 
             let results = Object.values(grouped).map(c => {
-                const cData = window.candidatesDataMap[c.name] || { writtenScore: 0, writtenMax: 25, age: 0, hasLicense: false, licenseSpec: 0, licensePed: 0, specialization: 'غير محدد', experienceYears: 0, expInsideKSA: true };
+                const cData = window.candidatesDataMap[c.name] || { writtenScore: 0, writtenMax: 25, age: 0, hasLicense: false, licenseSpec: 0, licensePed: 0, specialization: 'غير محدد', schoolName: 'غير محدد', experienceYears: 0, expInsideKSA: true };
                 
-                let avgPed = c.count > 0 ? ((c.rawSum / (c.count * (criteriaList.length * 5))) * 75) : 0;
+                // حساب درجة المقابلة كنسبة من 75 مهما كان عدد البنود
+                let avgPed = c.totalMaxPossible > 0 ? ((c.rawSum / c.totalMaxPossible) * 75) : 0;
                 
                 return {
                     ...c,
@@ -791,23 +968,24 @@
 
             results.sort((a,b) => b.final - a.final);
             window.allCalculatedResults = results;
-            window.applyAdminFilters(); // تطبيق الفلتر وعرض الجدول
+            window.applyAdminFilters(); 
 
         } catch (e) {
             console.error(e);
-            document.querySelector('tbody').innerHTML = `<tr><td colspan='11' style='color:red'>خطأ: ${e.message}</td></tr>`;
+            document.querySelector('tbody').innerHTML = `<tr><td colspan='12' style='color:red'>خطأ: ${e.message}</td></tr>`;
         }
     };
 
-    // الفلترة وعرض الجدول
     window.applyAdminFilters = () => {
         const specFilter = document.getElementById('filterSpec').value;
+        const schoolFilter = document.getElementById('filterSchool').value;
         const searchTerm = document.getElementById('searchName').value.toLowerCase();
         
         let filtered = window.allCalculatedResults.filter(r => {
             const matchSpec = specFilter === "الجميع" || r.cData.specialization === specFilter;
+            const matchSchool = schoolFilter === "الجميع" || r.cData.schoolName === schoolFilter;
             const matchName = r.name.toLowerCase().includes(searchTerm);
-            return matchSpec && matchName;
+            return matchSpec && matchName && matchSchool;
         });
 
         renderTable(filtered);
@@ -819,7 +997,7 @@
 
         tbody.innerHTML = "";
         if(data.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='11'>لا توجد نتائج تطابق بحثك.</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='12'>لا توجد نتائج تطابق بحثك.</td></tr>";
             return;
         }
 
@@ -830,6 +1008,7 @@
             
             let ageDisplay = r.cData.age ? `<span class="${r.cData.age > 42 ? 'age-red' : 'age-green'}">${r.cData.age}</span>` : "-";
             let expBadge = `<span class="badge ${r.cData.expInsideKSA ? 'badge-success' : 'badge-warning'}">${r.cData.experienceYears} س</span>`;
+            let schoolBadge = `<span class="badge badge-purple">${r.cData.schoolName || 'غير محدد'}</span>`;
 
             let licIcon = "❌";
             if (r.cData.hasLicense) {
@@ -842,6 +1021,7 @@
                 <tr class="${rowClass}">
                     <td>${i+1}</td>
                     <td style="text-align:right; font-weight:bold;">${r.name} <br> <small style="color:#666">مقيمين: ${r.count}</small></td>
+                    <td>${schoolBadge}</td>
                     <td><span class="badge badge-info">${r.cData.specialization}</span></td>
                     <td>${ageDisplay}</td>
                     <td>${expBadge}</td>
@@ -858,7 +1038,6 @@
         });
     }
 
-    // === المودال والتفاصيل ===
     window.showDetails = (name) => {
         const r = window.allCalculatedResults.find(x => x.name === name);
         if(!r) return;
@@ -870,7 +1049,6 @@
         let licText = r.cData.hasLicense ? `نعم (تخصص: ${r.cData.licenseSpec}، تربوي: ${r.cData.licensePed})` : "لا يوجد";
         let expText = `${r.cData.experienceYears} سنوات (${r.cData.expInsideKSA ? 'داخل المملكة' : 'خارج المملكة'})`;
             
-        // تحديد الترتيب ضمن الفلتر الحالي للطباعة
         const currentDataOnScreen = Array.from(document.querySelectorAll('#resultsTable tbody tr')).map(tr => tr.cells[1].innerText.split('\n')[0].trim());
         const rank = currentDataOnScreen.indexOf(name) + 1;
         const targetCount = parseInt(document.getElementById('targetCount').value) || 5;
@@ -878,6 +1056,7 @@
 
         document.getElementById('modalSummary').innerHTML = `
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div><b>المدرسة:</b> ${r.cData.schoolName || 'غير محدد'}</div>
                 <div><b>التخصص:</b> ${r.cData.specialization}</div>
                 <div><b>الحالة:</b> ${statusText} (الترتيب بالفلتر الحالي: ${rank || '-'})</div>
                 <div><b>العمر:</b> ${r.cData.age || "-"}</div>
@@ -898,8 +1077,11 @@
             r.details.forEach(d => {
                 let rows = "";
                 d.answers.forEach((ans, idx) => {
-                    let critTitle = criteriaList[idx] ? criteriaList[idx].title : `بند رقم ${idx+1}`;
-                    rows += `<tr><td style='text-align:right'>${critTitle}</td><td><b>${ans}</b></td></tr>`;
+                    // الاعتماد على المسمى المحفوظ وقت التقييم إن وجد، وإلا نستخدم المسمى الحالي أو الافتراضي
+                    let critTitle = (d.criteriaSnapshot && d.criteriaSnapshot[idx]) 
+                                    ? d.criteriaSnapshot[idx] 
+                                    : (window.criteriaList[idx] ? window.criteriaList[idx].title : `بند رقم ${idx+1}`);
+                    rows += `<tr><td style='text-align:right; font-size: 0.9em;'>${critTitle}</td><td style='width: 40px;'><b>${ans}</b>/5</td></tr>`;
                 });
                 
                 let notesHtml = d.notes ? `<div class="note-box">📝 <b>ملاحظات المقيم:</b> ${d.notes}</div>` : "";
@@ -907,7 +1089,7 @@
                 div.innerHTML += `
                     <details>
                         <summary>
-                            <span>👤 ${d.evalName} (مجموع: ${d.sum})</span>
+                            <span>👤 ${d.evalName} (النقاط: ${d.sum} من ${d.maxPossible})</span>
                             <button class="delete-btn no-print" onclick="deleteEval('${d.id}')">حذف التقييم</button>
                         </summary>
                         <div style="padding:10px;">
@@ -920,14 +1102,14 @@
     };
 
     window.deleteEval = async (id) => {
-        if (!currentUser) { alert("غير متصل بقاعدة البيانات بعد، يرجى الانتظار..."); return; }
+        if (!currentUser) return;
         if(!confirm("هل أنت متأكد من حذف هذا التقييم نهائياً؟")) return;
         try {
             await deleteDoc(getDRef("evaluations", id));
-            alert("تم الحذف.");
+            showAlert("تم الحذف.");
             document.getElementById('detailsModal').style.display = "none";
             window.fetchAndCalculateAll(); 
-        } catch(e) { alert("فشل الحذف: " + e.message); }
+        } catch(e) { showAlert("فشل الحذف: " + e.message); }
     }
 
     window.deleteCandidate = async (name) => {
@@ -944,10 +1126,10 @@
             snap.forEach(d => deletePromises.push(deleteDoc(getDRef("evaluations", d.id))));
             await Promise.all(deletePromises);
 
-            alert("✅ تم حذف المعلم وجميع بياناته بنجاح.");
+            showAlert("✅ تم حذف المعلم وجميع بياناته بنجاح.");
             window.fetchAndCalculateAll();
         } catch (e) {
-            alert("خطأ أثناء الحذف: " + e.message);
+            showAlert("خطأ أثناء الحذف: " + e.message);
         }
     };
 
@@ -966,10 +1148,10 @@
             eSnap.forEach(d => p2.push(deleteDoc(getDRef("evaluations", d.id))));
 
             await Promise.all([...p1, ...p2]);
-            alert("✅ تم إعادة ضبط النظام وحذف جميع بيانات المرشحين والتقييمات بنجاح.");
+            showAlert("✅ تم إعادة ضبط النظام وحذف جميع بيانات المرشحين والتقييمات بنجاح.");
             window.fetchAndCalculateAll();
         } catch(e) {
-            alert("خطأ: " + e.message);
+            showAlert("خطأ: " + e.message);
         }
     };
 
@@ -999,7 +1181,7 @@
     document.getElementById('btnLoginCorr').onclick = () => {
         if(document.getElementById('corrPass').value === "2222") {
             showPage('correctorPage');
-            loadCandidatesData(); // تحديث القوائم عند دخول المصحح
+            loadCandidatesData(); 
         } else alert("كلمة المرور خاطئة");
     };
 
@@ -1017,26 +1199,22 @@
         document.body.classList.remove('modal-open');
     };
 
-    // التشغيل الأولي
-    renderCriteria();
-    
     // تهيئة المصادقة
     const initAuth = async () => {
         try {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && typeof __firebase_config !== 'undefined') {
                 try {
                     await signInWithCustomToken(auth, __initial_auth_token);
-                    return; // نجاح التسجيل عبر التوكن الخاص بالبيئة
+                    return; 
                 } catch (e) {
-                    console.warn("فشل تسجيل الدخول بالتوكن المخصص. جاري التحويل للمجهول...", e);
+                    console.warn("فشل تسجيل الدخول بالتوكن المخصص.", e);
                 }
             }
-            // تسجيل دخول مجهول إذا فشل التوكن المخصص (لأن التوكن غير صالح لمشروع Firebase الخاص بك)
             await signInAnonymously(auth);
         } catch (error) {
             console.error("Auth error:", error);
             if (error.code === 'auth/configuration-not-found' || error.code === 'auth/admin-restricted-operation') {
-                alert("تنبيه: يبدو أن خدمة Authentication (تسجيل الدخول المجهول Anonymous) غير مفعلة في مشروع Firebase الخاص بك. يرجى تفعيلها من لوحة تحكم Firebase لكي يعمل النظام بشكل صحيح خارج هذه البيئة.");
+                alert("تنبيه: يبدو أن خدمة Authentication غير مفعلة في مشروع Firebase الخاص بك.");
             }
         }
     };
@@ -1044,10 +1222,10 @@
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
         if (user) {
-            loadCandidatesData(); // تحميل البيانات الأولية للقوائم المنسدلة
-            loadEvaluators(); // تحميل قائمة المقيمين المعتمدين
+            loadCandidatesData(); 
+            loadEvaluators(); 
+            loadCriteria(); // استدعاء البنود الديناميكية
             
-            // إذا كانت لوحة الإدارة مفتوحة، نقوم بتحديثها
             if (!document.getElementById('adminDashboard').classList.contains('hidden')) {
                 window.fetchAndCalculateAll();
             }
