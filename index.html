@@ -148,6 +148,15 @@
     </div>
 
     <div class="form-group">
+        <label>تصفية بفرع المدرسة:</label>
+        <select id="evalSchoolFilter" onchange="window.updateEvalCandidateDropdown()">
+            <option value="الجميع">الجميع</option>
+            <option value="مدارس التعلم ثنائي اللغة فرع العقيق">مدارس التعلم ثنائي اللغة فرع العقيق</option>
+            <option value="مدارس التعلم ثنائي اللغة فرع العارض">مدارس التعلم ثنائي اللغة فرع العارض</option>
+        </select>
+    </div>
+
+    <div class="form-group">
         <label>اختر المعلم المرشح:</label>
         <select id="evalCandName" onchange="window.showTeacherInfoForEvaluator()">
             <option value="">-- جاري تحميل قائمة المعلمين --</option>
@@ -679,15 +688,36 @@
         }
     }
 
+    window.updateEvalCandidateDropdown = () => {
+        const schoolFilter = document.getElementById('evalSchoolFilter').value;
+        const evalSelect = document.getElementById('evalCandName');
+        const currentEval = evalSelect.value;
+        
+        evalSelect.innerHTML = "<option value=''>-- اختر المعلم المرشح --</option>";
+        
+        const names = Object.keys(window.candidatesDataMap).sort();
+        names.forEach(n => {
+            const candidate = window.candidatesDataMap[n];
+            if (schoolFilter === "الجميع" || candidate.schoolName === schoolFilter) {
+                evalSelect.innerHTML += `<option value="${n}">${n}</option>`;
+            }
+        });
+        
+        if (Array.from(evalSelect.options).some(opt => opt.value === currentEval)) {
+            evalSelect.value = currentEval;
+        } else {
+            evalSelect.value = "";
+            if(window.showTeacherInfoForEvaluator) window.showTeacherInfoForEvaluator();
+        }
+    };
+
     function updateDropdowns() {
         const names = Object.keys(window.candidatesDataMap).sort();
         
-        const evalSelect = document.getElementById('evalCandName');
-        const currentEval = evalSelect.value;
-        evalSelect.innerHTML = "<option value=''>-- اختر المعلم المرشح --</option>";
-        names.forEach(n => evalSelect.innerHTML += `<option value="${n}">${n}</option>`);
-        if(names.includes(currentEval)) evalSelect.value = currentEval;
+        // 1. تحديث قائمة المقيم بناء على الفلتر
+        window.updateEvalCandidateDropdown();
 
+        // 2. تحديث قائمة الإدارة
         const adminSelect = document.getElementById('adminSelectCandidate');
         const currentAdmin = adminSelect.value;
         adminSelect.innerHTML = "<option value=''>-- اختر معلماً لتعديل بياناته --</option>";
